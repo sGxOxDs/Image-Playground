@@ -19,13 +19,12 @@ Image Studio 是以會話組織生成、比較與多輪編輯的本機優先圖�
 
 | 功能 | 行為 |
 |---|---|
-| 會話 | 新建、搜尋、切換、重新命名、置頂、封存、刪除、複製及從圖片建立會話。各會話保存自己的 Provider、模型及預設生成參數，單次生成可覆寫。 |
+| 會話 | 新建、搜尋、切換、重新命名、置頂、封存、刪除、複製及從圖片建立會話。各會話保存自己的 Provider、模型及預設生成參數，單次生成可覆寫。會話從最後一則對話起算，預設保留 30 天。 |
 | 本會話圖片 | 顯示當前會話的生成、編輯版本及參考圖。提供檢視、比較選取圖片與加入 Composer。 |
 | 全域圖片庫 | 瀏覽目前身分空間的生成圖片與上傳圖片，可從其他會話選圖作為參考，也可下載單張圖片。 |
 | 圖片比較 | 支援原圖與結果並排、兩張圖片的 Before／After 滑桿、2–4 張並排比較及同步縮放。圖片資訊包含 Prompt、模型、Seed、尺寸與時間。 |
-| 多輪編輯 | 每張圖有穩定 ID，可沿用最新結果、選擇任意舊版本開分支，或加上多張參考圖。每輪保留快照與來源關係。 |
-| 收藏與 Presets | 集中存取收藏圖片、常用 Prompt 與 Extra Body Presets。 |
-| Provider Profiles | Standalone 可管理多個 Profile，含 Base URL、API Key、模型與個別 Generation／Edit Endpoint，支援取得模型清單、手動設定及連線測試。Plugin 由已驗證的 LiteLLM 身分取得 Gateway 模型。 |
+| 多輪編輯 | Composer 的「沿用最新圖」是會話開關，預設關閉。開啟時立即套用已有的最新結果；之後每次生成或編輯完成，自動將同一會話的最新結果設為第一張來源圖，並保留其他參考圖。關閉後保留目前附件。也可選擇任意舊版本開分支。每輪保留快照與來源關係。 |
+| Provider Profiles | Standalone 可管理多個 Profile，含 Base URL、API Key、模型與個別 Generation／Edit Endpoint，支援取得模型清單、手動設定及連線測試。Plugin 登入後可輸入個人的 Virtual Key，從瀏覽器直連 Gateway 取得模型。 |
 | 本機資料管理 | 會話、訊息、圖片與參數存在瀏覽器的 IndexedDB。提供完整備份與還原、單獨匯出會話、清理孤立圖片與縮圖。 |
 
 ## Prompt Composer
@@ -34,10 +33,10 @@ Image Studio 是以會話組織生成、比較與多輪編輯的本機優先圖�
 |---|---|
 | Generate / Edit | 模式決定可用參數及引用圖片的規則，並載入各自的 Extra Body。 |
 | 多張參考圖 | 支援選檔、拖放、貼上，以及從歷史加入。送出前可移除、排序及檢視，排序代表引用優先順序。 |
-| Prompt Enhance | 可開關，提供 Auto Enhance 與 Provider Native。規劃在生成前展示可修改的增強結果。 |
-| 解析度 | 提供比例、目標 MP、自訂寬高。比例含 1:1、3:2、2:3、16:9、9:16、4:3、3:4、21:9 與原比例。可選原圖、參考圖或自訂比例作為計算基準。送出前顯示對齊後的實際輸出尺寸。 |
+| Prompt Enhance | Images API 預設送出 enhance_prompt 字串 true，可關閉或選擇 Auto Enhance。 |
+| 解析度 | 生成預設為 1024 × 1024，編輯預設按第一張來源圖的比例縮放至約 1 MP。各模式分別記住手動選擇。提供比例、目標 MP、自訂寬高，送出前顯示對齊後的實際輸出尺寸。 |
 | Seed | 提供 Random、Fixed、Manual。Random 每次產生新值，Fixed 重用固定值，Manual 輸入當次值。每次生成保存實際使用的 Seed；模型沒有此能力或未回報時，以對應狀態呈現。 |
-| Extra Body | Generation 與 Edit 分別保存 JSON 物件。提供格式驗證、欄位衝突提示、Request Preview 及 Preset 載入／儲存。完成後套用至所編輯的模式。 |
+| Extra Body | Generation 與 Edit 分別保存 JSON 物件。提供格式驗證、欄位衝突提示及 Request Preview。完成後套用至所編輯的模式。 |
 
 ### 實作提案
 
@@ -52,9 +51,9 @@ Image Studio 是以會話組織生成、比較與多輪編輯的本機優先圖�
 | 階段 | 交付與驗收 |
 |---|---|
 | 1 · 啟動與工作區 | 以現有 React Router 骨架完成 Plugin Manifest、SSO 與雙模式切換。同階段以測試資料完成 RWD 工作區、Composer 與 Extra Body 側板。驗證直接開啟與 iframe 登入流程。 |
-| 2 · 可用的生成與編輯 | 接上雙模式 Provider Adapter、模型清單及 API Proxy。完成 Generate、Edit、參考圖順序、版本關係與 IndexedDB 保存；驗證重開後仍可用同一來源圖繼續編輯。 |
-| 3 · 參數與資產工具 | 完成比例／MP、Seed、PE、Extra Body 的實際送出，以及比較、Timeline、Versions、全域圖片庫、收藏、Presets 和資料匯入匯出。以 Request Preview 與實際請求核對參數。 |
-| 後續擴充 | 完整佇列與批次生成、更多 Provider 能力偵測、進階 Presets 與 PWA。 |
+| 2 · 可用的生成與編輯 | 接上瀏覽器直連的 Provider Adapter 和模型清單。完成 Generate、Edit、參考圖順序、版本關係與 IndexedDB 保存，驗證重開後可用同一來源圖繼續編輯。 |
+| 3 · 參數與資產工具 | 完成比例／MP、Seed、PE、Extra Body 的實際送出，以及比較、Timeline、Versions、全域圖片庫和資料匯入匯出。以 Request Preview 與實際請求核對參數。 |
+| 後續擴充 | 完整佇列與批次生成、更多 Provider 能力偵測與 PWA。 |
 
 ## 待確認
 

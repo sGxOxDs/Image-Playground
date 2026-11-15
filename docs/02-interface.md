@@ -19,7 +19,7 @@
 
 中尺寸桌面的欄寬採原規劃範圍中的建議值。768 px 時中央寬度為 384 px，側欄分隔線計入各欄寬度。平板可縮短次要標籤及縮圖尺寸。欄內長標題截斷，完整名稱可由輔助技術取得。
 
-桌面與平板的功能欄提供新建會話、會話、圖片庫、收藏與 Presets、Provider、設定。會話列表、本會話圖片及訊息區各自垂直捲動。Header 留在頂部，Composer 位於會話欄底部並隨輸入高度調整。工作區高度採動態 viewport，Composer 底部納入安全區域。
+桌面與平板的會話與本會話圖片抽屜預設展開，可由 Header 個別收合。功能欄提供新建會話、圖片庫、Provider 及設定。會話列表、本會話圖片及訊息區各自垂直捲動。Header 留在頂部，Composer 位於會話欄底部並隨輸入高度調整。工作區高度採動態 viewport，Composer 底部納入安全區域。
 
 ## 手機
 
@@ -35,7 +35,7 @@
 
 ## 模式與 Provider
 
-Standalone 的 Provider 設定提供 Profile 切換、Base URL、憑證輸入、模型偵測、模型手動指定、Generation／Edit Endpoint 及連線測試。Plugin 的 Header 顯示 LiteLLM 身分與連線狀態，模型選單顯示已授權的模型，Provider 入口提供連線資訊。內嵌驗證中顯示等待狀態，失敗或過期時提供清楚的重新驗證入口。
+Standalone 的 Provider 設定提供 Profile 切換、Base URL、憑證輸入、模型偵測、模型手動指定、Generation／Edit Endpoint 及連線測試。Plugin 的 Header 顯示 LiteLLM 身分與模型。從 LiteLLM Gateway 設定輸入個人的 Virtual Key，測試連線即可取得授權模型。內嵌驗證中顯示等待狀態，失敗或過期時提供重新驗證入口。
 
 ## Composer 與浮層
 
@@ -43,12 +43,12 @@ Standalone 的 Provider 設定提供 Profile 切換、Base URL、憑證輸入、
 |---|---|
 | PromptInput | 多行文字欄支援貼圖及圖片拖放。桌面使用 Enter 送出、Shift+Enter 換行，中文輸入法選字期間維持輸入行為。手機用明確的生成按鈕送出。 |
 | AttachmentList | 提示詞旁顯示可預覽的縮圖、順序及移除按鈕。依附件順序送出。拖放排序搭配可由鍵盤操作的移動按鈕。 |
-| ComposerToolbar | PE、解析度、Seed 以摘要控制項開啟 Popover。解析度可切換比例、MP 與自訂，顯示來源及取整後尺寸。空間不足時工具列換行，生成操作保持可達。 |
-| Mode / Submit | Generate／Edit 控制項及主要生成按鈕放在 Composer。參數無效時顯示可修正原因。 |
+| ComposerToolbar | 工具列顯示目前模型、比例或模型尺寸，以及採用非預設值的選項。「更多」收納仍採預設值的選項。空間不足時工具列可換行。 |
+| Mode / Submit | 有附件時自動使用編輯，沒有附件時使用生成。開啟「沿用最新圖」後，每次任務完成都會更新此會話的第一張來源圖，保留其餘參考圖；即使沒有歷史結果也可先開啟。參數無效時顯示可修正原因。 |
 | PE Review | 實作提案。送出前以審閱面板顯示原文與增強候選，候選可直接編輯。小螢幕垂直排列，提交時保留實際採用的文字。 |
 | ExtraBodyPanel | 桌面由 Composer 右側展開 380–440 px 浮動側板。平板使用右側 Overlay，最大 440 px。手機使用全螢幕 Sheet。原會話欄寬維持固定。 |
 
-Extra Body 面板依序呈現模式標籤、JSON 編輯區、驗證結果、Preset、Request Preview 與「完成」。開啟時預選目前生成模式。切換標籤保留各模式的編輯草稿。欄位撞名時顯示採用值，進階使用者可在此明確覆寫允許的欄位。Esc 關閉最上層浮層，模態開啟時焦點留在浮層。
+Extra Body 面板依序呈現模式標籤、JSON 編輯區、驗證結果、Request Preview 與「完成」。開啟時預選目前生成模式。切換標籤保留各模式的編輯草稿。欄位撞名時顯示採用值，進階使用者可在此明確覆寫允許的欄位。Esc 關閉最上層浮層，模態開啟時焦點留在浮層。
 
 ## 結果與歷史
 
@@ -58,7 +58,7 @@ Extra Body 面板依序呈現模式標籤、JSON 編輯區、驗證結果、Pres
 
 ## 元件接手
 
-在 `react-project/app/components/layout/` 建立 `AppLayout`、`FunctionRail`、`SessionSidebar`、`ConversationPanel`、`ImageHistoryPanel` 及 `MobileDrawer`。會話、圖片歷史與 Composer 在各斷點共用，桌面／平板以欄寬調整，手機在抽屜內呈現側欄內容。Composer 下的輸入、附件、工具列及參數面板置於 `components/composer/`。工作區從現有 `home.tsx` 接入，圖片庫、收藏與設定可逐階段建立路由。
+在 `react-project/app/components/layout/` 建立 `AppLayout`、`FunctionRail`、`SessionSidebar`、`ConversationPanel`、`ImageHistoryPanel` 及 `MobileDrawer`。會話、圖片歷史與 Composer 在各斷點共用，桌面／平板以欄寬調整，手機在抽屜內呈現側欄內容。Composer 下的輸入、附件、工具列及參數面板置於 `components/composer/`。工作區從現有 `home.tsx` 接入，圖片庫與設定可逐階段建立路由。
 
 原規劃提出 Zustand 作為共用狀態方案，套件選擇待實作確認。建議以單一值記錄手機抽屜狀態（關閉、會話、圖片），並由共同狀態持有目前會話、模式、Composer 草稿及參考圖順序。
 
