@@ -20,8 +20,10 @@ export function meta({}: Route.MetaArgs) {
 }
 
 export default function Home({ loaderData }: Route.ComponentProps) {
+  // Vite 建置時 BASE_URL 為 react-router.config.ts 設定的 vite.base（靜態發布時為 /Image-Playground/）
+  const handshakeSrc = import.meta.env.BASE_URL + "workspace/plugin-handshake.js";
   return <>
-    <script src="/workspace/plugin-handshake.js" data-parent-origins={JSON.stringify(loaderData.origins)} />
+    <script src={handshakeSrc} data-parent-origins={JSON.stringify(loaderData.origins)} />
     <WorkspaceEntry origins={loaderData.origins} authUrl={loaderData.authUrl} />
   </>;
 }

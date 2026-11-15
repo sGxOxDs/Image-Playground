@@ -1,4 +1,4 @@
-import { blobDataUrl, generationDefaults, ratios, type Draft, type GenerationJob, type Picture, type Session, type Workspace } from "./model";
+import { blobDataUrl, generationDefaults, ratios, workspaceBase, type Draft, type GenerationJob, type Picture, type Session, type Workspace } from "./model";
 
 function record(value: unknown): value is Record<string, unknown> {
   return !!value && typeof value === "object" && !Array.isArray(value);
@@ -63,8 +63,12 @@ export async function importWorkspace(file: File): Promise<Workspace> {
     requireValue(thumbnail === undefined || record(thumbnail) && typeof thumbnail.backupBlob === "number" && blobs[thumbnail.backupBlob]);
     const preview = thumbnail === undefined ? undefined : blobs[thumbnail.backupBlob as number];
     if (typeof source === "string") {
-      requireValue(source === "/workspace/shinjuku.webp" || source === "/workspace/neon-street.webp");
-      return { ...value, source, thumbnail: preview } as Picture;
+      // 舊備份為根絕對路徑 /workspace/...，新備份含 BASE_URL 前綴；統一還原為相對路徑
+      const normalized = source.startsWith(workspaceBase)
+        ? source.slice(workspaceBase.length)
+        : `workspace/${source.replace(/^\/?workspace\//, "")}`;
+      requireValue(normalized === "workspace/shinjuku.webp" || normalized === "workspace/neon-street.webp");
+      return { ...value, source: normalized, thumbnail: preview } as Picture;
     }
     requireValue(record(source) && typeof source.backupBlob === "number" && blobs[source.backupBlob]);
     return { ...value, source: blobs[source.backupBlob], thumbnail: preview } as Picture;

@@ -117,8 +117,10 @@ export type GenerationJob = {
   results?: string[];
 };
 
-const shinjuku = "/workspace/shinjuku.webp";
-const neonStreet = "/workspace/neon-street.webp";
+// GitHub Pages 子路徑：靜態發布時 BASE_URL 為 /Image-Playground/（見 react-router.config.ts）
+export const workspaceBase = import.meta.env.BASE_URL;
+const shinjuku = workspaceBase + "workspace/shinjuku.webp";
+const neonStreet = workspaceBase + "workspace/neon-street.webp";
 export const ratios = ["1:1", "3:2", "2:3", "16:9", "9:16", "4:3", "3:4", "21:9", "original", "reference", "custom"];
 
 const generationResolution: ResolutionSettings = { ratio: "1:1", megapixels: 1, sizeMode: "custom", width: 1024, height: 1024 };
