@@ -3,9 +3,12 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "react-router build",
+    "build": "react-router build && node ./scripts/build-pwa.mjs",
+    "build:static": "node ./scripts/build-static.mjs",
     "dev": "react-router dev",
-    "start": "react-router-serve ./build/server/index.js",
+    "start": "node --import ./scripts/local-bind.mjs ./node_modules/@react-router/serve/bin.cjs ./build/server/index.js",
+    "start:api": "node --import ./scripts/local-bind.mjs ./node_modules/@react-router/serve/bin.cjs ./build-static/server/index.js",
+    "start:static": "node ./scripts/serve-static.mjs",
     "typecheck": "react-router typegen && tsc"
   },
   "dependencies": {
@@ -22,6 +25,7 @@
     "@types/node": "^22",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.7",
+    "http-server": "14.1.1",
     "tailwindcss": "^4.2.2",
     "typescript": "^5.9.3",
     "vite": "^8.0.3"

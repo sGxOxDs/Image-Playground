@@ -1,7 +1,9 @@
 import type { Config } from "@react-router/dev/config";
 
+const staticBuild = process.env.IMAGE_STUDIO_STATIC_BUILD === "true";
+
 export default {
-  // Config options...
-  // Server-side render by default, to enable SPA mode set this to `false`
+  buildDirectory: staticBuild ? "build-static" : "build",
+  prerender: staticBuild ? ["/"] : undefined,
   ssr: true,
 } satisfies Config;
