@@ -6,6 +6,8 @@
     "build": "react-router build && node ./scripts/build-pwa.mjs",
     "build:static": "node ./scripts/build-static.mjs",
     "dev": "react-router dev",
+    "devlop": "node ./scripts/publish-pages.mjs dev",
+    "publish:pages": "node ./scripts/publish-pages.mjs stable",
     "start": "node --import ./scripts/local-bind.mjs ./node_modules/@react-router/serve/bin.cjs ./build/server/index.js",
     "start:api": "node --import ./scripts/local-bind.mjs ./node_modules/@react-router/serve/bin.cjs ./build-static/server/index.js",
     "start:static": "node ./scripts/serve-static.mjs",
