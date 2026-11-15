@@ -1,3 +1,5 @@
 /graphify-out/*
 !/graphify-out/graph.json
 /react-project/.local/
+/.claude
+/.codex
