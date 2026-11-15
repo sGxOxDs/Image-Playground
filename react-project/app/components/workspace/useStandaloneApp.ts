@@ -26,7 +26,9 @@ export function useStandaloneApp(standalone: boolean) {
     const installed = () => setInstallPrompt(undefined);
     window.addEventListener("beforeinstallprompt", capture);
     window.addEventListener("appinstalled", installed);
-    void navigator.serviceWorker.register("/sw.js").catch(() => {});
+    void navigator.serviceWorker.register("./sw.js").catch((error: unknown) => {
+      console.error("Service worker registration failed:", error);
+    });
     return () => {
       window.removeEventListener("beforeinstallprompt", capture);
       window.removeEventListener("appinstalled", installed);

@@ -1,4 +1,4 @@
-import { blobDataUrl, maxPromptLength, type Draft, type RequestPreview } from "./model";
+import { blobDataUrl, maxPromptLength, resolveImageSource, type Draft, type RequestPreview } from "./model";
 import type { ImageProgress, ProviderPreview, ProviderProfile, ProviderResult } from "./provider-types";
 import { partialImageCount, supportsSeed } from "./image-capabilities";
 import { nativeEnhanceSetting, persistedKey, profileKey, protectedField, providerEndpoint } from "./provider-profiles";
@@ -79,7 +79,7 @@ function jsonBody(value: unknown) {
 }
 
 async function fileFor(picture: Draft["references"][number], signal: AbortSignal) {
-  const source = picture.source;
+  const source = typeof picture.source === "string" ? resolveImageSource(picture.source) : picture.source;
   const blob = typeof source === "string" ? await (await fetch(source, { signal, credentials: "omit" })).blob() : source;
   return new File([blob], picture.title, { type: blob.type });
 }

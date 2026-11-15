@@ -117,8 +117,14 @@ export type GenerationJob = {
   results?: string[];
 };
 
-// GitHub Pages 子路徑：靜態發布時 BASE_URL 為 /Image-Playground/（見 react-router.config.ts）
-export const workspaceBase = import.meta.env.BASE_URL;
+export const workspaceBase = import.meta.env.VITE_WORKSPACE_BASE;
+export function resolveImageSource(source: string): string {
+  const relativeSource = source.replace(/^\//, "");
+  if (relativeSource === "workspace/shinjuku.webp" || relativeSource === "workspace/neon-street.webp") {
+    return workspaceBase + relativeSource;
+  }
+  return source;
+}
 const shinjuku = workspaceBase + "workspace/shinjuku.webp";
 const neonStreet = workspaceBase + "workspace/neon-street.webp";
 export const ratios = ["1:1", "3:2", "2:3", "16:9", "9:16", "4:3", "3:4", "21:9", "original", "reference", "custom"];

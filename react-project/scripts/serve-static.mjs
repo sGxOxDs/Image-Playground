@@ -21,6 +21,14 @@ const server = httpServer.createServer({
   headers: { "Content-Security-Policy": frameAncestors() },
   before: [(request, response) => {
     if (hosts.includes(request.headers.host)) {
+      if ((request.method === "GET" || request.method === "HEAD") && request.url === "/") {
+        response.writeHead(302, { Location: "/Image-Playground/" });
+        response.end();
+        return;
+      }
+      if (request.url === "/Image-Playground" || request.url.startsWith("/Image-Playground/")) {
+        request.url = request.url.slice("/Image-Playground".length) || "/";
+      }
       if ((request.method === "GET" || request.method === "HEAD") && request.url === "/api/plugin-manifest") {
         request.url = "/workspace/plugin-manifest.json";
       }

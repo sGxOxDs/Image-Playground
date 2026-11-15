@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type MouseEvent, type ReactNode } from "react";
-import type { ImageSource } from "./model";
+import { resolveImageSource, type ImageSource } from "./model";
 
 export function Icon({ name }: { name: string }) {
   return <span className="material-symbol" aria-hidden="true">{name}</span>;
@@ -32,7 +32,7 @@ export function useImageUrl(source: ImageSource) {
     setObjectUrl(url);
     return () => URL.revokeObjectURL(url);
   }, [source]);
-  return typeof source === "string" ? source : objectUrl;
+  return typeof source === "string" ? resolveImageSource(source) : objectUrl;
 }
 
 export function PictureImage({ source, alt, className }: { source: ImageSource; alt: string; className?: string }) {

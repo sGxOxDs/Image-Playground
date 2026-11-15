@@ -11,9 +11,7 @@ import type { Route } from "./+types/root";
 import { appearanceBootstrap, useAppearanceChrome } from "./components/workspace/appearance";
 import "./app.css";
 
-// Vite 建置時 BASE_URL 為 react-router.config.ts 設定的 vite.base
-//（靜態發布時為 /Image-Playground/，其他為 /），讓 workspace 資產走子路徑。
-const base = import.meta.env.BASE_URL;
+const base = import.meta.env.VITE_WORKSPACE_BASE;
 export const links: Route.LinksFunction = () => [
   { rel: "manifest", href: base + "workspace/image-studio.webmanifest" },
   { rel: "icon", href: base + "workspace/app-192.png", type: "image/png" },
