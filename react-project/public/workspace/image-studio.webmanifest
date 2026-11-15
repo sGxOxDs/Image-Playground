@@ -1,0 +1,16 @@
+{
+  "id": "/",
+  "name": "Image Studio 圖片工作台",
+  "short_name": "Image Studio",
+  "description": "管理圖片生成、編輯與版本的本機工作台",
+  "lang": "zh-Hant",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#18181b",
+  "theme_color": "#18181b",
+  "icons": [
+    { "src": "/workspace/app-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/workspace/app-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}

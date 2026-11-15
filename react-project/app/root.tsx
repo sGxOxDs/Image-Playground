@@ -8,9 +8,13 @@ import {
 } from "react-router";
 
 import type { Route } from "./+types/root";
+import { appearanceBootstrap, useAppearanceChrome } from "./components/workspace/appearance";
 import "./app.css";
 
 export const links: Route.LinksFunction = () => [
+  { rel: "manifest", href: "/workspace/image-studio.webmanifest" },
+  { rel: "icon", href: "/workspace/app-192.png", type: "image/png" },
+  { rel: "apple-touch-icon", href: "/workspace/app-192.png" },
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
   {
     rel: "preconnect",
@@ -24,11 +28,14 @@ export const links: Route.LinksFunction = () => [
 ];
 
 export function Layout({ children }: { children: React.ReactNode }) {
+  useAppearanceChrome();
   return (
-    <html lang="en">
+    <html lang="zh-Hant" suppressHydrationWarning>
       <head>
         <meta charSet="utf-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+        <meta name="theme-color" content="#f4f4f5" suppressHydrationWarning />
+        <script dangerouslySetInnerHTML={{ __html: appearanceBootstrap }} />
         <Meta />
         <Links />
       </head>

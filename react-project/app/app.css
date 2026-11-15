@@ -5,11 +5,35 @@
     "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
 }
 
-html,
-body {
-  @apply bg-white dark:bg-gray-950;
+:root {
+  color-scheme: light dark;
 
-  @media (prefers-color-scheme: dark) {
-    color-scheme: dark;
-  }
+  --surface-canvas: light-dark(#f4f4f5, #18181b);
+  --surface-panel: light-dark(#ededf0, #202024);
+  --surface-raised: light-dark(#ffffff, #27272a);
+  --surface-selected: light-dark(#ede3ff, #352548);
+  --surface-image: #18181b;
+  --text-primary: light-dark(#18181b, #f4f4f5);
+  --text-secondary: light-dark(#52525b, #d4d4d8);
+  --border-subtle: light-dark(#d4d4d8, #3f3f46);
+  --border-control: light-dark(#71717a, #a1a1aa);
+  --action-primary: light-dark(#6d28d9, #c4a5ff);
+  --action-primary-hover: light-dark(#5b21b6, #d8c2ff);
+  --text-on-action: light-dark(#ffffff, #18181b);
+  --text-link: light-dark(#1d4ed8, #93c5fd);
+  --focus-ring: light-dark(#2563eb, #60a5fa);
+  --status-success: light-dark(#166534, #86efac);
+  --status-warning: light-dark(#92400e, #fcd34d);
+  --status-error: light-dark(#b91c1c, #fca5a5);
+
+  background-color: var(--surface-canvas);
+  color: var(--text-primary);
+}
+
+[data-appearance="light"] { color-scheme: light; }
+[data-appearance="dark"] { color-scheme: dark; }
+
+:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
 }
