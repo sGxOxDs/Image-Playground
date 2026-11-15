@@ -1,0 +1,8 @@
+.react-router
+build
+build-static
+node_modules
+README.md
+.local
+.env
+.env.*

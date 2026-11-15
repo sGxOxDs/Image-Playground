@@ -1,0 +1,79 @@
+<!DOCTYPE html><html lang="zh-Hant"><head><meta charSet="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/><meta name="theme-color" content="#f4f4f5"/><title>Image Studio — 圖片工作台</title><meta name="description" content="以會話管理圖片生成、編輯與版本的本機工作台。"/><link rel="manifest" href="/workspace/image-studio.webmanifest"/><link rel="icon" href="/workspace/app-192.png" type="image/png"/><link rel="apple-touch-icon" href="/workspace/app-192.png"/><link rel="preconnect" href="https://fonts.googleapis.com"/><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous"/><link rel="modulepreload" href="/assets/entry.client-Dgn1TTJN.js"/><link rel="modulepreload" href="/assets/jsx-runtime-Yykwgpsd.js"/><link rel="modulepreload" href="/assets/root-DFDYOjtb.js"/><link rel="modulepreload" href="/assets/appearance-x48SIvFG.js"/><link rel="modulepreload" href="/assets/home-B3LdjbFX.js"/><script>(() => {
+  try {
+    const value = localStorage.getItem("image-studio-appearance");
+    if (value === "light" || value === "dark") document.documentElement.dataset.appearance = value;
+  } catch {}
+  const dark = document.documentElement.dataset.appearance === "dark" ||
+    (!document.documentElement.dataset.appearance && matchMedia("(prefers-color-scheme: dark)").matches);
+  document.querySelector('meta[name="theme-color"]')?.setAttribute("content", dark ? "#18181b" : "#f4f4f5");
+})();</script><link rel="stylesheet" href="/assets/root-BwWwP_Hb.css"/><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&amp;display=swap"/><link rel="stylesheet" href="/assets/home-Bw0V5bDv.css"/></head><body><script src="/workspace/plugin-handshake.js" data-parent-origins="[]"></script><main class="ws-app"><div class="ws-empty-canvas" aria-live="polite"><h1>Image Studio</h1><p>正在啟動工作台…</p></div></main><script>((storageKey, restoreKey) => {
+		if (!window.history.state || !window.history.state.key) {
+			let key = Math.random().toString(32).slice(2);
+			window.history.replaceState({ key }, "");
+		}
+		try {
+			let storedY = JSON.parse(sessionStorage.getItem(storageKey) || "{}")[restoreKey || window.history.state.key];
+			if (typeof storedY === "number") window.scrollTo(0, storedY);
+		} catch (error) {
+			console.error(error);
+			sessionStorage.removeItem(storageKey);
+		}
+	})("react-router-scroll-positions", null)</script><script>window.__reactRouterContext = {"basename":"/","future":{"unstable_customRouteDiscovery":false,"unstable_enableNodeReadableStream":false,"unstable_optimizeDeps":false},"routeDiscovery":{"mode":"lazy","manifestPath":"/__manifest"},"ssr":true,"isSpaMode":false,"unstable_apiOnly":false};window.__reactRouterContext.stream = new ReadableStream({start(controller){window.__reactRouterContext.streamController = controller;}}).pipeThrough(new TextEncoderStream());</script><script type="module" async="">;
+import * as route0 from "/assets/root-DFDYOjtb.js";
+import * as route1 from "/assets/home-B3LdjbFX.js";
+  window.__reactRouterManifest = {
+  "entry": {
+    "module": "/assets/entry.client-Dgn1TTJN.js",
+    "imports": [
+      "/assets/jsx-runtime-Yykwgpsd.js"
+    ],
+    "css": []
+  },
+  "routes": {
+    "root": {
+      "id": "root",
+      "path": "",
+      "hasAction": false,
+      "hasLoader": false,
+      "hasClientAction": false,
+      "hasClientLoader": false,
+      "hasClientMiddleware": false,
+      "hasDefaultExport": true,
+      "hasErrorBoundary": true,
+      "module": "/assets/root-DFDYOjtb.js",
+      "imports": [
+        "/assets/jsx-runtime-Yykwgpsd.js",
+        "/assets/appearance-x48SIvFG.js"
+      ],
+      "css": [
+        "/assets/root-BwWwP_Hb.css"
+      ]
+    },
+    "routes/home": {
+      "id": "routes/home",
+      "parentId": "root",
+      "index": true,
+      "hasAction": false,
+      "hasLoader": true,
+      "hasClientAction": false,
+      "hasClientLoader": false,
+      "hasClientMiddleware": false,
+      "hasDefaultExport": true,
+      "hasErrorBoundary": false,
+      "module": "/assets/home-B3LdjbFX.js",
+      "imports": [
+        "/assets/jsx-runtime-Yykwgpsd.js",
+        "/assets/appearance-x48SIvFG.js"
+      ],
+      "css": [
+        "/assets/home-Bw0V5bDv.css"
+      ]
+    }
+  },
+  "url": "/assets/manifest-a8585c79.js",
+  "version": "a8585c79"
+};
+  window.__reactRouterRouteModules = {"root":route0,"routes/home":route1};
+
+import("/assets/entry.client-Dgn1TTJN.js");</script><!--$?--><template id="B:0"></template><!--/$--><script id="_R_">requestAnimationFrame(function(){$RT=performance.now()});</script><div hidden id="S:0"><script>window.__reactRouterContext.streamController.enqueue("[{\"_1\":2,\"_3\":-5,\"_4\":-5},\"loaderData\",{\"_5\":6},\"actionData\",\"errors\",\"routes/home\",{\"_7\":8,\"_9\":10},\"origins\",[],\"authUrl\",\"http://127.0.0.1:3000/api/plugin-auth\"]\n");</script><!--$?--><template id="B:1"></template><!--/$--></div><script>$RB=[];$RV=function(a){$RT=performance.now();for(var b=0;b<a.length;b+=2){var c=a[b],e=a[b+1];null!==e.parentNode&&e.parentNode.removeChild(e);var f=c.parentNode;if(f){var g=c.previousSibling,h=0;do{if(c&&8===c.nodeType){var d=c.data;if("/$"===d||"/&"===d)if(0===h)break;else h--;else"$"!==d&&"$?"!==d&&"$~"!==d&&"$!"!==d&&"&"!==d||h++}d=c.nextSibling;f.removeChild(c);c=d}while(c);for(;e.firstChild;)f.insertBefore(e.firstChild,c);g.data="$";g._reactRetry&&requestAnimationFrame(g._reactRetry)}}a.length=0};
+$RC=function(a,b){if(b=document.getElementById(b))(a=document.getElementById(a))?(a.previousSibling.data="$~",$RB.push(a,b),2===$RB.length&&("number"!==typeof $RT?requestAnimationFrame($RV.bind(null,$RB)):(a=performance.now(),setTimeout($RV.bind(null,$RB),2300>a&&2E3<a?2300-a:$RT+300-a)))):b.parentNode.removeChild(b)};$RC("B:0","S:0")</script><div hidden id="S:1"><script>window.__reactRouterContext.streamController.close();</script></div><script>$RC("B:1","S:1")</script></body></html>
