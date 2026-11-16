@@ -1,6 +1,6 @@
 # Image Studio 技術架構
 
-工作台共用 React、TypeScript、Vite 與 Tailwind，瀏覽器以 IndexedDB 儲存資料。`npm run build:static` 產生首頁與資產，由 `http-server` 託管。Standalone 直連 Provider。LiteLLM Dashboard 內嵌同一前端，身分聲明由獨立服務驗證，模型請求由瀏覽器直連 Gateway。 [本機部署步驟](../react-project/README.md#在本機以-http-server-託管前端)
+工作台共用 React、TypeScript、Vite 與 Tailwind，瀏覽器以 IndexedDB 儲存資料。`npm run build:static` 產生靜態首頁與資產；內嵌時直接使用 Standalone 工作台，不驗證 LiteLLM 身分。伺服器部署則可驗證 LiteLLM 身分聲明。模型請求由瀏覽器直連 Provider 或 Gateway。 [部署步驟](../react-project/README.md#litellm-plugin)
 
 [功能規劃](./01-features.md) · [介面規格](./02-interface.md) · [設計系統](./03-design-system.md)
 
@@ -15,6 +15,8 @@ flowchart LR
 ```
 
 瀏覽器依啟動模式與驗證身分開啟對應的本機資料空間。
+
+靜態版內嵌時不執行以下身分交換，使用 Standalone 的資料空間與 Provider 設定，不依 LiteLLM 帳號隔離；瀏覽器可能依頂層網站分區儲存資料。
 
 | 項目 | LiteLLM Plugin | Standalone |
 |---|---|---|
@@ -31,6 +33,8 @@ flowchart LR
 4. 驗證成功進入 `litellm-authenticated` 並開啟該身分的資料空間。驗證失敗或 Session 過期分別進入 `auth-failed`、`session-expired`，停止該身分的請求，等待重新驗證。切換帳號時關閉前一身分的資料連線並清除工作台的記憶體狀態。
 
 LiteLLM 身分聲明提供登入身分，使用者另在插件輸入自己的 Virtual Key。Gateway 依該 Key 套用模型權限及預算。`PLUGIN_AUTH_KEY` 由身分驗證服務保管。 [LiteLLM Plugins](https://docs.litellm.ai/docs/proxy/plugins)
+
+伺服器另可設定共用 Virtual Key：由後端驗證 Session、代理受限的 Gateway 端點，並以已驗證的使用者 ID 覆蓋建立請求的 `user` 欄位。共用 Key 不傳給瀏覽器；模型權限與費用仍由共用 Key 決定。Responses 所有權記錄僅保留於單一伺服器記憶體。
 
 ## Provider Adapter 與請求
 

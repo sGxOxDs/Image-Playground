@@ -3,6 +3,7 @@ import type { ImageProgress, ProviderPreview, ProviderProfile, ProviderResult } 
 import { partialImageCount, supportsSeed } from "./image-capabilities";
 import { nativeEnhanceSetting, persistedKey, profileKey, protectedField, providerEndpoint } from "./provider-profiles";
 import { streamLines } from "./stream-lines";
+import type { PluginConnection } from "./WorkspaceEntry";
 
 type UpstreamImage = { type?: string; b64_json?: string; result?: string; url?: string; revised_prompt?: string; seed?: number };
 type UpstreamResult = { id?: string; status?: string; data?: UpstreamImage[]; output?: UpstreamImage[];
@@ -38,9 +39,12 @@ export async function providerApi<T>(url: string, init?: RequestInit): Promise<T
   return data as T;
 }
 
-async function upstream(url: string, key: string, signal: AbortSignal, init: RequestInit = {}) {
+async function upstream(url: string, key: string, signal: AbortSignal, init: RequestInit = {}, plugin?: PluginConnection) {
   const headers = new Headers(init.headers);
-  if (key) headers.set("Authorization", "Bearer " + key);
+  const proxy = plugin?.sharedGateway && url.startsWith(window.location.origin + "/api/gateway/v1/");
+  if (plugin?.sharedGateway && !proxy) throw new Error("共用 Gateway 僅允許使用代理端點。");
+  if (proxy) headers.set("Authorization", "Bearer " + plugin.token);
+  else if (key) headers.set("Authorization", "Bearer " + key);
   let response: Response;
   try {
     response = await fetch(url, { ...init, headers, signal, mode: "cors", credentials: "omit", redirect: "error" });
@@ -58,15 +62,16 @@ async function upstream(url: string, key: string, signal: AbortSignal, init: Req
   return response;
 }
 
-export async function discoverModels(baseUrl: string, key: string, signal: AbortSignal) {
-  const response = await upstream(providerEndpoint(baseUrl, "", "/models"), key, signal);
+export async function discoverModels(baseUrl: string, key: string, signal: AbortSignal, plugin?: PluginConnection) {
+  const response = await upstream(providerEndpoint(baseUrl, "", "/models"), key, signal, {}, plugin);
   const data = await response.json();
   if (!Array.isArray(data?.data)) throw new Error("Provider 沒有回傳模型清單。");
   const ids = data.data.flatMap((model: { id?: unknown } | null) => typeof model?.id === "string" ? [model.id] : []);
   return [...new Set<string>(ids)].sort();
 }
 
-function requireKey(profile: ProviderProfile, namespace: string) {
+function requireKey(profile: ProviderProfile, namespace: string, plugin?: PluginConnection) {
+  if (plugin?.sharedGateway) return "";
   const key = profileKey(namespace, profile);
   if (!key && (namespace !== "standalone" || profile.hasKey || persistedKey(namespace, profile.id))) {
     throw new Error("請在 Provider 設定重新輸入 API Key。");
@@ -183,14 +188,14 @@ function validResponseId(id: unknown): id is string {
   return typeof id === "string" && /^[\w-]{1,256}$/.test(id);
 }
 
-async function pollResponse(initial: UpstreamResult, url: string, key: string, signal: AbortSignal, progress?: (event: ImageProgress) => void) {
+async function pollResponse(initial: UpstreamResult, url: string, key: string, signal: AbortSignal, progress?: (event: ImageProgress) => void, plugin?: PluginConnection) {
   if (!validResponseId(initial.id)) throw new Error("Provider 未回傳有效的背景工作 ID。");
   const id = initial.id;
   const taskUrl = url + "/" + id;
   const ticket = crypto.randomUUID();
   let inFlight: Promise<UpstreamResult> | undefined;
   let cancelled = false;
-  const cancel = () => inFlight ??= upstream(taskUrl + "/cancel", key, AbortSignal.timeout(12_000), { method: "POST" })
+  const cancel = () => inFlight ??= upstream(taskUrl + "/cancel", key, AbortSignal.timeout(12_000), { method: "POST" }, plugin)
     .then(async (response): Promise<UpstreamResult> => {
       const data: UpstreamResult = await response.json();
       if (data.id !== id) throw new Error("Provider 回傳不同的背景工作 ID。");
@@ -208,7 +213,7 @@ async function pollResponse(initial: UpstreamResult, url: string, key: string, s
       previous = payload.status;
       await pollDelay(end);
       if (cancelled) throw new ProviderJobCancelled();
-      payload = await (await upstream(taskUrl, key, end)).json();
+      payload = await (await upstream(taskUrl, key, end, {}, plugin)).json();
       if (payload.id !== id) throw new Error("Provider 回傳不同的背景工作 ID。");
     }
     if (cancelled || payload.status === "cancelled") throw new ProviderJobCancelled();
@@ -291,13 +296,13 @@ function seed(value: unknown) {
 }
 
 export async function sendImage(draft: Draft, snapshot: RequestPreview, profile: ProviderProfile, signal: AbortSignal,
-  previewOnly: true, namespace: string): Promise<ProviderPreview>;
+  previewOnly: true, namespace: string, progress?: undefined, plugin?: PluginConnection): Promise<ProviderPreview>;
 export async function sendImage(draft: Draft, snapshot: RequestPreview, profile: ProviderProfile, signal: AbortSignal,
-  previewOnly: false, namespace: string, progress?: (event: ImageProgress) => void): Promise<ProviderResult>;
+  previewOnly: false, namespace: string, progress?: (event: ImageProgress) => void, plugin?: PluginConnection): Promise<ProviderResult>;
 export async function sendImage(draft: Draft, snapshot: RequestPreview, profile: ProviderProfile, signal: AbortSignal,
-  previewOnly: boolean, namespace: string, progress?: (event: ImageProgress) => void): Promise<ProviderPreview | ProviderResult> {
-  const key = previewOnly ? profileKey(namespace, profile) : requireKey(profile, namespace);
-  const hasKey = Boolean(key || profile.hasKey || persistedKey(namespace, profile.id));
+  previewOnly: boolean, namespace: string, progress?: (event: ImageProgress) => void, plugin?: PluginConnection): Promise<ProviderPreview | ProviderResult> {
+  const key = plugin?.sharedGateway ? "" : previewOnly ? profileKey(namespace, profile) : requireKey(profile, namespace, plugin);
+  const hasKey = Boolean(plugin?.sharedGateway || key || profile.hasKey || persistedKey(namespace, profile.id));
   const files = draft.mode === "edit" || profile.responsesModel
     ? await Promise.all(draft.references.map((picture) => fileFor(picture, signal))) : [];
   const mask = draft.mode === "edit" && draft.mask ? await fileFor(draft.mask, signal) : undefined;
@@ -306,7 +311,7 @@ export async function sendImage(draft: Draft, snapshot: RequestPreview, profile:
     : prepareImages(draft, snapshot, profile, files, mask, hasKey, previewOnly, key);
   if (previewOnly) return prepared.preview;
   const dispatch = (request: Prepared) => upstream(request.preview.url, key, AbortSignal.any([signal, AbortSignal.timeout(120_000)]),
-    { method: "POST", body: request.body, headers: request.preview.encoding === "json" ? { "content-type": "application/json" } : undefined });
+    { method: "POST", body: request.body, headers: request.preview.encoding === "json" ? { "content-type": "application/json" } : undefined }, plugin);
   let response: Response;
   try { response = await dispatch(prepared); }
   catch (error) {
@@ -317,7 +322,7 @@ export async function sendImage(draft: Draft, snapshot: RequestPreview, profile:
   let payload: UpstreamResult = response.headers.get("content-type")?.includes("text/event-stream")
     ? await readEvents(response, draft.mode, progress) : await response.json();
   if (profile.responsesModel && (payload.status === "queued" || payload.status === "in_progress")) {
-    payload = await pollResponse(payload, prepared.preview.url, key, signal, progress);
+    payload = await pollResponse(payload, prepared.preview.url, key, signal, progress, plugin);
   }
   const outputs = profile.responsesModel ? payload.output?.filter((item) => item?.type === "image_generation_call") : payload.data;
   if (!Array.isArray(outputs) || outputs.length < 1 || outputs.length > 4) throw new Error("Provider 未回傳可用的圖片結果。");
@@ -334,15 +339,15 @@ export async function cancelProviderJob(ticket: string) {
   if (cancel && (await cancel()).status !== "cancelled") throw new Error("Provider 尚未確認取消。");
 }
 
-export async function requestEnhancedPrompt(profile: ProviderProfile, prompt: string, signal: AbortSignal, namespace: string) {
-  const key = requireKey(profile, namespace);
+export async function requestEnhancedPrompt(profile: ProviderProfile, prompt: string, signal: AbortSignal, namespace: string, plugin?: PluginConnection) {
+  const key = requireKey(profile, namespace, plugin);
   const response = await upstream(providerEndpoint(profile.baseUrl, "", "/chat/completions"), key, signal, jsonBody({
     model: profile.enhanceModel,
     messages: [
       { role: "system", content: "Enhance the user's image prompt in its original language. Preserve intent, required details and constraints. Return only the revised prompt." },
       { role: "user", content: prompt },
     ],
-  }));
+  }), plugin);
   const data = await response.json();
   const candidate = data?.choices?.[0]?.message?.content;
   if (typeof candidate !== "string" || !candidate.trim() || candidate.trim().length > maxPromptLength) {

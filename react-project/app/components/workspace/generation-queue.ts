@@ -1,5 +1,6 @@
 import { imagePreview, renderDemo, type GenerationJob, type Turn, type Workspace } from "./model";
 import { sendImage } from "./provider-client";
+import type { PluginConnection } from "./WorkspaceEntry";
 
 export type GenerationProgress = { previews: number } | { rendered: number; total: number }
   | { ticket: string; status: "queued" | "in_progress" };
@@ -16,11 +17,11 @@ export function interruptPendingJobs(workspace: Workspace): Workspace {
 }
 
 export async function executeJob(job: GenerationJob, signal: AbortSignal, namespace: string,
-  onProgress?: (progress: GenerationProgress) => void): Promise<Turn[]> {
+  onProgress?: (progress: GenerationProgress) => void, plugin?: PluginConnection): Promise<Turn[]> {
   const { id, draft, profile, request } = job;
   const result = profile ? await sendImage(draft, request, profile, signal, false, namespace,
     (event) => onProgress?.(event.type === "partial" ? { previews: event.count }
-      : { ticket: event.ticket, status: event.status })) : undefined;
+      : { ticket: event.ticket, status: event.status }), plugin) : undefined;
   const demo = [];
   if (!profile) {
     const count = request.extraBody.n ?? 1;

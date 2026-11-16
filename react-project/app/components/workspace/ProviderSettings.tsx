@@ -3,6 +3,7 @@ import { discoverModels } from "./provider-client";
 import { deleteProfile, nativeEnhanceSetting, persistedKey, profileKey, providerBase, saveProfile, type ProfilesPayload } from "./provider-profiles";
 import type { ImageCapabilities, ProviderProfile } from "./provider-types";
 import { PanelDialog } from "./ui";
+import type { PluginConnection } from "./WorkspaceEntry";
 
 const emptyProfile: ProviderProfile = {
   id: "", name: "", baseUrl: "", model: "", generatePath: "", editPath: "",
@@ -14,7 +15,7 @@ const sizeFields = [["alignment", "長寬對齊"], ["minEdge", "最小邊長"], 
 export function ProviderSettings({ data, selectedId, onChange, onSelect, onClose, online, namespace, gateway }: {
   data: ProfilesPayload; selectedId?: string; onChange: (data: ProfilesPayload) => void;
   onSelect: (id?: string) => void; onClose: () => void; online: boolean;
-  namespace: string; gateway?: { baseUrl: string; userId: string };
+  namespace: string; gateway?: { baseUrl: string; userId: string; plugin: PluginConnection };
 }) {
   const initialProfile = gateway ? { ...emptyProfile, name: "LiteLLM Gateway", baseUrl: gateway.baseUrl } : emptyProfile;
   const [draft, setDraft] = useState(data.profiles.find(({ id }) => id === selectedId) ?? initialProfile);
@@ -47,7 +48,7 @@ export function ProviderSettings({ data, selectedId, onChange, onSelect, onClose
 
   return <PanelDialog title={gateway ? "LiteLLM Gateway" : "Provider"} onClose={() => { if (!busy) onClose(); }}>
     <div className="ws-dialog-content">
-      {gateway && <p>已驗證帳號 {gateway.userId}。請輸入此帳號的 LiteLLM Virtual Key。</p>}
+      {gateway && <p>已驗證帳號 {gateway.userId}。{gateway.plugin.sharedGateway ? "使用伺服器的共用 Virtual Key。" : "請輸入此帳號的 LiteLLM Virtual Key。"}</p>}
       <label className="ws-field">本會話的 Provider<select value={selectedId ?? ""} disabled={busy}
         onChange={(event) => { onSelect(event.target.value || undefined); switchProfile(event.target.value); }}>
         <option value="" disabled={Boolean(gateway)}>{gateway ? "使用第一個 Gateway Profile" : "本機示範"}</option>
@@ -77,12 +78,12 @@ export function ProviderSettings({ data, selectedId, onChange, onSelect, onClose
         <label className="ws-field">API Base URL<input type="url" required disabled={busy} readOnly={Boolean(gateway)}
           placeholder="https://api.example.com/v1" value={gateway?.baseUrl ?? draft.baseUrl}
           onChange={(event) => { change({ baseUrl: event.target.value }); resetDiscovery(); }} /></label>
-        <label className="ws-field">{gateway ? "Virtual Key" : "API Key"}<input type="password" autoComplete="new-password" value={key} disabled={busy}
+        {!gateway?.plugin.sharedGateway && <><label className="ws-field">{gateway ? "Virtual Key" : "API Key"}<input type="password" autoComplete="new-password" value={key} disabled={busy}
           placeholder={draft.hasKey ? "已設定" : persistedKey(namespace, draft.id) ? "請重新輸入" : "依 Provider 需求填寫"}
           onChange={(event) => { setKey(event.target.value); setClearKey(false); resetDiscovery(); }} /></label>
         {(draft.hasKey || persistedKey(namespace, draft.id)) && <label><input type="checkbox" checked={clearKey} disabled={busy}
           onChange={(event) => { setClearKey(event.target.checked); resetDiscovery(); }} /> 移除此 Profile 的 API Key</label>}
-        <p className="ws-muted">Profile 與 API Key 保存在此瀏覽器。可在這裡移除已儲存的 Key。</p>
+        <p className="ws-muted">Profile 與 API Key 保存在此瀏覽器。可在這裡移除已儲存的 Key。</p></>}
         <label className="ws-field">模型 ID<input value={draft.model} maxLength={200}
           onChange={(event) => change({ model: event.target.value })} /></label>
         {!!discovered.length && <label className="ws-field">偵測到的模型<select value="" disabled={busy} onChange={(event) => change({ model: event.target.value })}>
@@ -95,7 +96,7 @@ export function ProviderSettings({ data, selectedId, onChange, onSelect, onClose
               setDiscovered([]);
               const baseUrl = providerBase(gateway?.baseUrl ?? draft.baseUrl);
               const saved = profileKey(namespace, { id: draft.id, baseUrl });
-              const models = await discoverModels(baseUrl, clearKey ? "" : key.trim() || saved, AbortSignal.timeout(15_000));
+              const models = await discoverModels(baseUrl, clearKey ? "" : key.trim() || saved, AbortSignal.timeout(15_000), gateway?.plugin);
               setDiscovered(models); setStatus(`連線成功，取得 ${models.length} 個模型。`);
             })}>測試連線並偵測模型</button>
         </div>

@@ -21,4 +21,7 @@ COPY --from=build-env /app/build /app/build
 COPY --from=build-env /app/scripts/local-bind.mjs /app/scripts/local-bind.mjs
 WORKDIR /app
 ENV HOST=0.0.0.0
+LABEL org.opencontainers.image.source="https://github.com/sGxOxDs/Image-Playground"
+EXPOSE 3000
+USER node
 CMD ["npm", "run", "start"]

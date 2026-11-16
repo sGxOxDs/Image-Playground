@@ -8,14 +8,14 @@ const client = new URL("client/", build);
 const editorAssets = [
   base + "workspace/app-192.png", base + "workspace/app-512.png", base + "workspace/image-studio.webmanifest",
   base + "workspace/material-symbols.woff2", base + "workspace/neon-street.webp", base + "workspace/shinjuku.webp",
-  base + "workspace/plugin-handshake.js", base + "workspace/plugin-manifest.json",
+  base + "workspace/plugin-handshake.js",
+  ...(staticBuild ? [base + "workspace/plugin-manifest.json"] : []),
 ];
 const files = (await readdir(new URL("assets/", client), { withFileTypes: true }))
   .filter((file) => file.isFile() && !file.name.endsWith(".map"))
   .map((file) => base + "assets/" + file.name);
 const paths = [...editorAssets, ...files].sort();
-// 計算 hash 時用「去掉 "./" 前綴」的絕對路徑讀檔；sw.js 預快取保留 "./" 相對路徑
-const readPaths = paths.map((p) => p.replace(/^\.\//, ""));
+const readPaths = paths.map((p) => p.replace(/^(?:\.\/|\/)/, ""));
 const worker = await readFile(new URL("./pwa-worker.js", import.meta.url), "utf8");
 const hash = createHash("sha256").update(worker)
   .update(await readFile(new URL(staticBuild ? "client/index.html" : "server/index.js", build)));

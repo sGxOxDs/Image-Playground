@@ -73,16 +73,18 @@ export function WorkspaceView({ plugin }: { plugin?: PluginConnection }) {
   const savedDraft = automaticMode(workspace.drafts[session.id] ?? sessionDraft(session, workspace.lastGeneration));
   const selectedProfileId = savedDraft.profileOverride === null ? undefined : savedDraft.profileOverride ?? session.profileId;
   const profileRequired = Boolean(plugin || selectedProfileId);
-  const profile = selectedProfileId
+  const savedProfile = selectedProfileId
     ? providers.profiles.find(({ id }) => id === selectedProfileId)
     : plugin ? providers.profiles[0] : undefined;
+  const sharedBase = plugin?.sharedGateway ? window.location.origin + "/api/gateway" : undefined;
+  const profile = savedProfile && sharedBase ? { ...savedProfile, baseUrl: sharedBase, generatePath: "", editPath: "" } : savedProfile;
   const draft: Draft = savedDraft.enhance === "provider" && (!profile || profile.responsesModel)
     ? { ...savedDraft, enhance: "off" } : savedDraft;
   const retentionDays = workspace.retentionDays ?? defaultRetentionDays;
   const jobs = workspace.jobs ?? [];
   const pendingJobs = jobs.filter(({ status }) => status === "queued" || status === "running");
   const providerLabel = plugin ? "LiteLLM Gateway" : "Provider";
-  const gatewayStatus = !online ? "離線" : profile?.hasKey ? profile.model : "設定 Virtual Key";
+  const gatewayStatus = !online ? "離線" : plugin?.sharedGateway ? profile?.model || "設定模型" : profile?.hasKey ? profile.model : "設定 Virtual Key";
   const positions = new Map(jobs.filter(({ status }) => status === "queued").map(({ id }, index) => [id, index + 1]));
   const sessionJobs = jobs.filter(({ sessionId }) => sessionId === session.id);
   const visibleJob = sessionJobs.find(({ status }) => status === "running")
@@ -220,9 +222,10 @@ export function WorkspaceView({ plugin }: { plugin?: PluginConnection }) {
         await saveQueue.current;
         controller.signal.throwIfAborted();
         if (next.profile && !navigator.onLine) throw new Error("Provider 需要網路連線。");
-        const turns = await executeJob(next, controller.signal, namespace, (update) => {
+        const job = next.profile && sharedBase ? { ...next, profile: { ...next.profile, baseUrl: sharedBase, generatePath: "", editPath: "" } } : next;
+        const turns = await executeJob(job, controller.signal, namespace, (update) => {
           if (!controller.signal.aborted) setProgress({ id: next.id, update });
-        });
+        }, plugin);
         if (controller.signal.aborted) return;
         setWorkspace((current) => {
           if (!current.jobs?.some((item) => item.id === next.id && item.status === "running")) return current;
@@ -262,7 +265,7 @@ export function WorkspaceView({ plugin }: { plugin?: PluginConnection }) {
       }
     }
     void process(job);
-  }, [ready, workspace.jobs, namespace, workerCycle]);
+  }, [ready, workspace.jobs, namespace, workerCycle, plugin, sharedBase]);
 
   useEffect(() => {
     const desktop = window.matchMedia("(min-width: 768px)");
@@ -478,7 +481,7 @@ export function WorkspaceView({ plugin }: { plugin?: PluginConnection }) {
     if (profileRequired && !profile) {
       return "此會話的 Provider 或模型無法使用，請重新選擇。";
     }
-    if (profile && !profile.hasKey && (plugin || persistedKey(namespace, profile.id))) {
+    if (profile && !plugin?.sharedGateway && !profile.hasKey && (plugin || persistedKey(namespace, profile.id))) {
       return "請在 Provider 設定重新輸入 API Key。";
     }
     if (profile && !profile.model) {
@@ -568,7 +571,7 @@ export function WorkspaceView({ plugin }: { plugin?: PluginConnection }) {
     setEnhanceBusy(true);
     try {
       const result = await requestEnhancedPrompt(profile, original,
-        AbortSignal.any([controller.signal, AbortSignal.timeout(30_000)]), namespace);
+        AbortSignal.any([controller.signal, AbortSignal.timeout(30_000)]), namespace, plugin);
       if (enhanceToken.current === controller) acceptSuggestion(result.prompt);
     } catch (error) {
       if (enhanceToken.current !== controller) return;
@@ -752,7 +755,7 @@ export function WorkspaceView({ plugin }: { plugin?: PluginConnection }) {
       </PanelDialog>}
       {panel === "provider" && <ProviderSettings data={providers} selectedId={session.profileId ?? (plugin ? profile?.id : undefined)}
         onChange={setProviders} onSelect={selectProfile} online={online} onClose={() => setPanel(null)} namespace={namespace}
-        gateway={plugin ? { baseUrl: plugin.gatewayBaseUrl, userId: plugin.userId } : undefined} />}
+        gateway={plugin ? { baseUrl: sharedBase ?? plugin.gatewayBaseUrl, userId: plugin.userId, plugin } : undefined} />}
       {panel === "settings" && <PanelDialog title="設定" onClose={() => setPanel(null)}>
         <div className="ws-dialog-content">
           <AppearanceSettings />

@@ -9,6 +9,8 @@ test("static output uses the Pages basename and resolves manifest icons", async 
   assert.match(html, /"basename":"\/Image-Playground"/);
   assert.doesNotMatch(html, /["']\/(?:assets|workspace)\//);
   assert.doesNotMatch(html, /\.\/(?:module|url)\/assets/);
+  assert.match(html, /aria-label="工作台功能"/);
+  assert.doesNotMatch(html, /data-parent-origins=/);
 
   const manifest = JSON.parse(await readFile(new URL("workspace/image-studio.webmanifest", client), "utf8"));
   const manifestUrl = "https://example.test/Image-Playground/workspace/image-studio.webmanifest";

@@ -78,14 +78,47 @@ Provider Profile 與 API Key 保存在此瀏覽器的 LocalStorage，依資料�
 
 ### LiteLLM Plugin
 
-以下以 Dashboard `http://127.0.0.1:4000`、靜態前端 `http://127.0.0.1:8080`、身分驗證服務 `http://127.0.0.1:3000` 為例。
+GitHub Pages 靜態版內嵌在 LiteLLM Dashboard 時直接開啟 Standalone 工作台，不需要額外登入或身分驗證服務。在 LiteLLM 註冊插件並設定工作台網址後，於工作台新增 Provider Profile，填入 Gateway 網址與使用者自己的 Virtual Key；Gateway 必須允許工作台來源的 CORS。
 
-1. 在靜態前端終端設定 `$env:LITELLM_PARENT_ORIGINS = 'http://127.0.0.1:4000'`，再執行 `npm run build:static` 與 `npm run start:static`。
-2. 在身分驗證服務終端設定相同的 `LITELLM_PARENT_ORIGINS`、`$env:IMAGE_STUDIO_PLUGIN_ORIGIN = 'http://127.0.0.1:8080'`，以及依 LiteLLM 文件由 Gateway Salt 衍生的 `PLUGIN_AUTH_KEY`，再執行 `npm run start:api`。可在建置時用 `IMAGE_STUDIO_PLUGIN_AUTH_URL` 覆寫預設的驗證端點 `http://127.0.0.1:3000/api/plugin-auth`。
-3. 在 LiteLLM 登記插件 `image-studio`、工作台 URL `http://127.0.0.1:8080` 與專用 `plugin_key`。若自訂插件名稱，建置與驗證服務都要設定相同的 `LITELLM_PLUGIN_NAME`。Dashboard 與 LiteLLM 程序均須能存取插件 URL。
-4. Gateway 的 `LITELLM_CORS_ORIGINS` 加入工作台來源 `http://127.0.0.1:8080`，並保留部署所需的其他來源。開啟插件後，在「LiteLLM Gateway」輸入使用者自己的 Virtual Key，測試連線並選擇模型。
+靜態版不驗證 LiteLLM 身分，也不限制只有登入使用者才能開啟；同一瀏覽器的獨立工作台資料與 Provider 憑證不依 LiteLLM 帳號隔離。瀏覽器可能依頂層網站分區儲存資料。需要身分驗證及帳號隔離時，請使用下方的伺服器部署。
+
+以 `npm run start:static` 託管時，需在服務啟動前設定 `LITELLM_PARENT_ORIGINS` 為允許內嵌的 Dashboard 來源；未設定時服務會禁止內嵌。
+
+#### 有身分驗證的伺服器部署
+
+1. 在 Image Studio 服務設定 `LITELLM_PARENT_ORIGINS` 為 LiteLLM Dashboard 的來源，並設定依 LiteLLM 文件由 Gateway Salt 衍生的 `PLUGIN_AUTH_KEY`，再執行 `npm run build` 與 `npm run start`。
+2. 在 LiteLLM 登記插件、Image Studio 服務網址與專用 `plugin_key`。若插件名稱不是 `image-studio`，服務需設定相同的 `LITELLM_PLUGIN_NAME`。
+3. 預設使用個人 Virtual Key：將工作台來源加入 Gateway 的 `LITELLM_CORS_ORIGINS`，開啟插件後在「LiteLLM Gateway」輸入 Key、測試連線並選擇模型。若改用下方的共用 Key 模式，請設定 `LITELLM_SHARED_API_KEY` 和 `LITELLM_API_BASE`；工作台透過後端代理連線，不需要使用者輸入 Key 或為此設定 Gateway CORS。
 
 Gateway 預設採用 Dashboard 來源。驗證服務可設定 `LITELLM_BROWSER_API_BASE` 指定瀏覽器可達的 Gateway Base URL。為保留原有的 LiteLLM 資料空間，可沿用已設定的 `LITELLM_GATEWAY_ID` 或 `LITELLM_API_BASE` 作為識別。Virtual Key 的路由與模型權限由 Gateway 管理。 [LiteLLM Plugins](https://docs.litellm.ai/docs/proxy/plugins) · [LiteLLM Virtual Key 權限](https://docs.litellm.ai/docs/proxy/virtual_keys)
+
+#### Docker
+
+容器包含工作台和身分驗證後端，監聽 3000 埠。從容器外透過 HTTPS 反向代理公開服務，並設定以下執行時環境變數：
+
+- `LITELLM_PARENT_ORIGINS`：允許內嵌的 LiteLLM Dashboard 來源，多個來源以逗號分隔
+- `LITELLM_PLUGIN_NAME`：LiteLLM 註冊的插件名稱，例如 `image-playground-plugin`
+- `PLUGIN_AUTH_KEY`：依 LiteLLM 文件以 Gateway Salt 和插件名稱衍生的 Fernet 金鑰；不要放入映像或版本控制
+- `IMAGE_STUDIO_PLUGIN_ORIGIN`：瀏覽器開啟 Image Studio 的公開來源，例如 `https://studio.example.com`
+- `LITELLM_BROWSER_API_BASE`：瀏覽器可連線的 Gateway 網址；不設定時使用 Dashboard 來源
+- `LITELLM_SHARED_API_KEY`：選用的共用 LiteLLM Virtual Key，只保存在後端；設定後插件使用後端代理，不需每位使用者輸入 Key
+- `LITELLM_API_BASE`：啟用共用 Key 時必填，指向容器可連線的 LiteLLM Gateway，例如 `http://litellm:4000`
+
+將環境變數放在安全保管的 `image-studio.env`，再執行：
+
+```bash
+docker login ghcr.io
+docker pull ghcr.io/sgxoxds/image-playground:latest
+docker run -d --name image-studio --restart unless-stopped \
+  --env-file image-studio.env -p 127.0.0.1:3000:3000 \
+  ghcr.io/sgxoxds/image-playground:latest
+```
+
+GHCR 私人映像需要使用具有套件讀取權限的帳號登入。
+
+將 LiteLLM 插件 URL 設為 Image Studio 的公開 HTTPS 網址，不是 GitHub Pages 網址。`plugin_key` 是 LiteLLM 轉送至插件後端時使用的憑證，不會自動變成 Gateway Virtual Key。Image Studio Session 和已使用的聲明記錄僅存在容器記憶體；重啟後需重新連線，請使用單一容器實例。
+
+共用 Key 模式下，Gateway 的模型權限、額度與費用由該 Key 決定。後端在圖片生成、編輯、文字增強和 Responses 建立請求的 `user` 欄位寫入已驗證的 LiteLLM 使用者 ID，覆蓋瀏覽器提供的值；LiteLLM 聲明不包含使用者名稱。模型查詢與背景工作查詢沒有請求本文。Responses 的存取權記錄保存在容器記憶體 24 小時，重啟或過期後無法繼續查詢、取消或沿用先前回應。共用模式只代理支援的 Gateway 端點，並拒絕覆寫憑證、上游網址或追蹤 metadata 的欄位。
 
 ## Building for Production
 

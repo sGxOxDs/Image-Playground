@@ -64,15 +64,19 @@ export function exchangeClaim(claim: string, parent: string, previousToken?: str
   const { userId, role, claimId, claimExpiry } = decodeClaim(claim, now);
   prune(now);
   if (usedClaims.has(claimId)) throw new PluginError("此 LiteLLM 身分聲明已使用。");
+  const gatewayBaseUrl = process.env.LITELLM_BROWSER_API_BASE || parent;
+  const sharedGateway = Boolean(process.env.LITELLM_SHARED_API_KEY);
+  if (sharedGateway && !process.env.LITELLM_API_BASE) {
+    throw new PluginError("共用 Gateway 尚未設定 LITELLM_API_BASE。", 503);
+  }
   usedClaims.set(claimId, claimExpiry);
   const token = randomBytes(32).toString("base64url");
-  const gatewayBaseUrl = process.env.LITELLM_BROWSER_API_BASE || parent;
   const gateway = process.env.LITELLM_GATEWAY_ID || process.env.LITELLM_API_BASE || gatewayBaseUrl;
   const identity = { userId, role, expiresAt: (now + sessionLifetime) * 1000,
     namespace: digest(JSON.stringify([gateway, pluginName, userId])) };
   if (previousToken) sessions.delete(digest(previousToken));
   sessions.set(digest(token), identity);
-  return { token, ...identity, gatewayBaseUrl };
+  return { token, ...identity, gatewayBaseUrl, sharedGateway };
 }
 
 export function getPluginSession(request: Request): PluginIdentity | undefined {
