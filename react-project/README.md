@@ -98,6 +98,8 @@ Gateway 預設採用 Dashboard 來源。驗證服務可設定 `LITELLM_BROWSER_A
 
 從本 repository 建置映像的指令請見 [根目錄的 LiteLLM 外掛部署](../readme.md#litellm-外掛部署)。下方另提供預建映像的啟動方式。
 
+建置使用 BuildKit 的 npm 快取。只修改原始碼時，可用 `docker build --progress=plain` 確認兩個依賴安裝步驟命中快取。執行時由 Node 直接啟動服務並接收容器停止訊號。
+
 容器包含工作台和身分驗證後端，監聽 3000 埠。從容器外透過 HTTPS 反向代理公開服務，並設定以下執行時環境變數：
 
 - `LITELLM_PARENT_ORIGINS`：允許內嵌的 LiteLLM Dashboard 來源，多個來源以逗號分隔
