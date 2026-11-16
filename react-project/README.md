@@ -114,6 +114,10 @@ docker run -d --name image-studio --restart unless-stopped \
   ghcr.io/sgxoxds/image-playground:latest
 ```
 
+```powershell
+python -c 'import base64,getpass,hashlib,hmac; s=getpass.getpass(); n=input(); print(base64.urlsafe_b64encode(hmac.new(s.encode(),n.encode(),hashlib.sha256).digest()).decode())'
+```
+
 GHCR 私人映像需要使用具有套件讀取權限的帳號登入。
 
 將 LiteLLM 插件 URL 設為 Image Studio 的公開 HTTPS 網址，不是 GitHub Pages 網址。`plugin_key` 是 LiteLLM 轉送至插件後端時使用的憑證，不會自動變成 Gateway Virtual Key。Image Studio Session 和已使用的聲明記錄僅存在容器記憶體；重啟後需重新連線，請使用單一容器實例。
