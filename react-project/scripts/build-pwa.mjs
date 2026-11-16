@@ -6,7 +6,8 @@ const base = staticBuild ? "./" : "/";
 const build = new URL(staticBuild ? "../build-static/" : "../build/", import.meta.url);
 const client = new URL("client/", build);
 const editorAssets = [
-  base + "workspace/app-192.png", base + "workspace/app-512.png", base + "workspace/image-studio.webmanifest",
+  base + "workspace/app-192-transparent.png", base + "workspace/app-512-transparent.png",
+  base + "workspace/app-512.png", base + "workspace/image-studio.webmanifest",
   base + "workspace/material-symbols.woff2", base + "workspace/neon-street.webp", base + "workspace/shinjuku.webp",
   base + "workspace/plugin-handshake.js",
   ...(staticBuild ? [base + "workspace/plugin-manifest.json"] : []),

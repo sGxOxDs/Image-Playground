@@ -14,8 +14,8 @@ import "./app.css";
 const base = import.meta.env.VITE_WORKSPACE_BASE;
 export const links: Route.LinksFunction = () => [
   { rel: "manifest", href: base + "workspace/image-studio.webmanifest" },
-  { rel: "icon", href: base + "workspace/app-192.png", type: "image/png" },
-  { rel: "apple-touch-icon", href: base + "workspace/app-192.png" },
+  { rel: "icon", href: base + "workspace/app-192-transparent.png", type: "image/png" },
+  { rel: "apple-touch-icon", href: base + "workspace/app-192-transparent.png" },
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
   {
     rel: "preconnect",
