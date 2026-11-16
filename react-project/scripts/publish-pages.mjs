@@ -169,7 +169,7 @@ function getReleaseChanges(root, baseline, sourceCommit, hasSourceBaseline) {
 }
 
 async function publish(mode, requestedVersion) {
-  const projectRoot = path.dirname(fileURLToPath(import.meta.url));
+  const projectRoot = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
   const root = git(["rev-parse", "--show-toplevel"], { cwd: projectRoot, capture: true });
   if (mode === "stable" && !VERSION_PATTERN.test(requestedVersion ?? "")) {
     throw new Error("正式版請提供 X.Y.Z 版號，例如 npm run publish:pages -- 0.0.6");
