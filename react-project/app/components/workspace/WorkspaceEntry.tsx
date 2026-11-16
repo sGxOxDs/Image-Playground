@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { providerApi } from "./provider-client";
 import { WorkspaceView } from "./Workspace";
 
-export type PluginConnection = { token: string; userId: string; role: string; namespace: string; expiresAt: number; gatewayBaseUrl: string; sharedGateway?: boolean };
+export type PluginConnection = { token: string; userId: string; role: string; namespace: string; expiresAt: number; gatewayBaseUrl: string; sharedGateway?: boolean; defaultModel?: string };
 type Claim = { claim: string; origin: string };
 type EntryState =
   | { mode: "detecting" | "pending" | "standalone" | "expired" }

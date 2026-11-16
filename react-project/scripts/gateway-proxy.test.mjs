@@ -47,6 +47,7 @@ test("shared Gateway authenticates sessions and assigns verified users", async (
     cwd, stdio: "ignore", env: { ...process.env, HOST: "127.0.0.1", PORT: String(port),
       IMAGE_STUDIO_STATIC_BUILD: "false", IMAGE_STUDIO_PLUGIN_ORIGIN: origin,
       LITELLM_PARENT_ORIGINS: parent, LITELLM_PLUGIN_NAME: "image-studio",
+      LITELLM_DEFAULT_MODEL: "  image-test  ",
       LITELLM_API_BASE: `http://127.0.0.1:${gateway.address().port}`,
       LITELLM_SHARED_API_KEY: sharedKey, PLUGIN_AUTH_KEY: key.toString("base64url"),
       LITELLM_PROXY_UPLOAD_BUDGET_MIB: "512", LITELLM_PROXY_UPLOAD_TIMEOUT_MS: "1200",
@@ -72,6 +73,7 @@ test("shared Gateway authenticates sessions and assigns verified users", async (
     assert.equal(response.status, 200);
     const result = await response.json();
     assert.equal(result.sharedGateway, true);
+    assert.equal(result.defaultModel, "image-test");
     assert.ok(!JSON.stringify(result).includes(sharedKey));
     return result.token;
   }

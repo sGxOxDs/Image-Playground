@@ -1,14 +1,10 @@
 import { useState } from "react";
 import { discoverModels } from "./provider-client";
-import { deleteProfile, nativeEnhanceSetting, persistedKey, profileKey, providerBase, saveProfile, type ProfilesPayload } from "./provider-profiles";
+import { deleteProfile, emptyProfile, gatewayProfile, nativeEnhanceSetting, persistedKey, profileKey, providerBase, saveProfile, type ProfilesPayload } from "./provider-profiles";
 import type { ImageCapabilities, ProviderProfile } from "./provider-types";
 import { PanelDialog } from "./ui";
 import type { PluginConnection } from "./WorkspaceEntry";
 
-const emptyProfile: ProviderProfile = {
-  id: "", name: "", baseUrl: "", model: "", generatePath: "", editPath: "",
-  edits: true, multiImage: false, sendSize: false, seedField: "", hasKey: false,
-};
 const sizeFields = [["alignment", "長寬對齊"], ["minEdge", "最小邊長"], ["maxEdge", "最大邊長"],
   ["maxPixels", "最大總像素"], ["maxAspect", "最大長寬比（長邊／短邊）"]] as const;
 
@@ -17,7 +13,7 @@ export function ProviderSettings({ data, selectedId, onChange, onSelect, onClose
   onSelect: (id?: string) => void; onClose: () => void; online: boolean;
   namespace: string; gateway?: { baseUrl: string; userId: string; plugin: PluginConnection };
 }) {
-  const initialProfile = gateway ? { ...emptyProfile, name: "LiteLLM Gateway", baseUrl: gateway.baseUrl } : emptyProfile;
+  const initialProfile = gateway ? gatewayProfile(gateway.baseUrl, gateway.plugin.defaultModel) : emptyProfile;
   const [draft, setDraft] = useState(data.profiles.find(({ id }) => id === selectedId) ?? initialProfile);
   const [sizes, setSizes] = useState((draft.imageCapabilities?.fixedSizes ?? []).join(", "));
   const [key, setKey] = useState("");
@@ -51,7 +47,9 @@ export function ProviderSettings({ data, selectedId, onChange, onSelect, onClose
       {gateway && <p>已驗證帳號 {gateway.userId}。{gateway.plugin.sharedGateway ? "使用伺服器的共用 Virtual Key。" : "請輸入此帳號的 LiteLLM Virtual Key。"}</p>}
       <label className="ws-field">本會話的 Provider<select value={selectedId ?? ""} disabled={busy}
         onChange={(event) => { onSelect(event.target.value || undefined); switchProfile(event.target.value); }}>
-        <option value="" disabled={Boolean(gateway)}>{gateway ? "使用第一個 Gateway Profile" : "本機示範"}</option>
+        <option value="" disabled={Boolean(gateway)}>{gateway
+          ? !data.profiles.length && gateway.plugin.defaultModel ? `伺服器預設模型 · ${gateway.plugin.defaultModel}` : "使用第一個 Gateway Profile"
+          : "本機示範"}</option>
         {selectedId && !data.profiles.some(({ id }) => id === selectedId) &&
           <option value={selectedId} disabled>目前 Provider 無法連線</option>}
         {data.profiles.map(({ id, name }) => <option value={id} key={id}>{name}</option>)}

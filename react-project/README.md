@@ -107,6 +107,7 @@ Gateway 預設採用 Dashboard 來源。驗證服務可設定 `LITELLM_BROWSER_A
 - `PLUGIN_AUTH_KEY`：依 LiteLLM 文件以 Gateway Salt 和插件名稱衍生的 Fernet 金鑰；不要放入映像或版本控制
 - `IMAGE_STUDIO_PLUGIN_ORIGIN`：瀏覽器開啟 Image Studio 的公開來源，例如 `https://studio.example.com`
 - `LITELLM_BROWSER_API_BASE`：瀏覽器可連線的 Gateway 網址；不設定時使用 Dashboard 來源
+- `LITELLM_DEFAULT_MODEL`：選用的預設圖片模型 ID，例如 `LITELLM_DEFAULT_MODEL=my-image-model`。它會帶入新 Gateway Profile；尚未儲存 Profile 時，共用 Key 模式可直接使用此模型，個人 Key 模式仍需輸入 Key 並儲存。自動配置的 Profile 會以 `seed` 欄位傳送 Seed，新的工作台預設使用隨機值。模型不接受 `seed` 時，可在 Profile 的「Seed 欄位」改選「由模型決定」並儲存。
 - `LITELLM_SHARED_API_KEY`：選用的共用 LiteLLM Virtual Key，只保存在後端；設定後插件使用後端代理，不需每位使用者輸入 Key
 - `LITELLM_API_BASE`：啟用共用 Key 時必填，指向容器可連線的 LiteLLM Gateway，例如 `http://litellm:4000`
 - `LITELLM_PROXY_UPLOAD_BUDGET_MIB`：共用 Key 代理每程序的在途上傳預算，預設 `512`。每筆預留 body 大小的 4 倍，最低 64 KiB。缺少 Content-Length 時按 128 MiB 上限預留。調低預算會降低可受理的單筆大小與併發量。超出單筆上限回傳 `413`，預算暫滿回傳 `503` 和 `Retry-After: 2`。

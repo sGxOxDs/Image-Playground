@@ -2,6 +2,16 @@ import { parseImageCapabilities } from "./image-capabilities";
 import type { ProviderProfile } from "./provider-types";
 
 export type ProfilesPayload = { profiles: ProviderProfile[] };
+export const emptyProfile: ProviderProfile = {
+  id: "", name: "", baseUrl: "", model: "", generatePath: "", editPath: "",
+  edits: true, multiImage: false, sendSize: false, seedField: "", hasKey: false,
+};
+
+export function gatewayProfile(baseUrl: string, defaultModel = ""): ProviderProfile {
+  return { ...emptyProfile, name: "LiteLLM Gateway", baseUrl, model: defaultModel,
+    seedField: defaultModel ? "seed" : "" };
+}
+
 const storageKey = (namespace: string) => "image-studio:providers:" + namespace;
 const credentialKey = (namespace: string, profile: Pick<ProviderProfile, "id" | "baseUrl">) =>
   "image-studio:provider-key:" + JSON.stringify([namespace, profile.id, profile.baseUrl]);

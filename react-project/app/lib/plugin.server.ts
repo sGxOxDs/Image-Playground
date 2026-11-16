@@ -65,6 +65,7 @@ export function exchangeClaim(claim: string, parent: string, previousToken?: str
   prune(now);
   if (usedClaims.has(claimId)) throw new PluginError("此 LiteLLM 身分聲明已使用。");
   const gatewayBaseUrl = process.env.LITELLM_BROWSER_API_BASE || parent;
+  const defaultModel = process.env.LITELLM_DEFAULT_MODEL?.trim() || undefined;
   const sharedGateway = Boolean(process.env.LITELLM_SHARED_API_KEY);
   if (sharedGateway && !process.env.LITELLM_API_BASE) {
     throw new PluginError("共用 Gateway 尚未設定 LITELLM_API_BASE。", 503);
@@ -76,7 +77,7 @@ export function exchangeClaim(claim: string, parent: string, previousToken?: str
     namespace: digest(JSON.stringify([gateway, pluginName, userId])) };
   if (previousToken) sessions.delete(digest(previousToken));
   sessions.set(digest(token), identity);
-  return { token, ...identity, gatewayBaseUrl, sharedGateway };
+  return { token, ...identity, gatewayBaseUrl, sharedGateway, defaultModel };
 }
 
 export function getPluginSession(request: Request): PluginIdentity | undefined {

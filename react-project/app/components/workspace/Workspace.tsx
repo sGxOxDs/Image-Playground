@@ -10,7 +10,7 @@ import { ImageComparison, Viewer } from "./ImageInspect";
 import { ManageData, ManageSession } from "./ManageWorkspace";
 import { ProviderSettings } from "./ProviderSettings";
 import { cancelProviderJob, ProviderJobCancelled, requestEnhancedPrompt } from "./provider-client";
-import { persistedKey, readProfiles, type ProfilesPayload } from "./provider-profiles";
+import { gatewayProfile, persistedKey, readProfiles, type ProfilesPayload } from "./provider-profiles";
 import { executeJob, interruptPendingJobs, isRunningBackgroundJob, type GenerationProgress } from "./generation-queue";
 import { applicationReferenceLimit, supportsMask } from "./image-capabilities";
 import { maskHeaderSize } from "./mask-format";
@@ -74,10 +74,12 @@ export function WorkspaceView({ plugin }: { plugin?: PluginConnection }) {
   const savedDraft = automaticMode(workspace.drafts[session.id] ?? sessionDraft(session, workspace.lastGeneration));
   const selectedProfileId = savedDraft.profileOverride === null ? undefined : savedDraft.profileOverride ?? session.profileId;
   const profileRequired = Boolean(plugin || selectedProfileId);
+  const sharedBase = plugin?.sharedGateway ? window.location.origin + "/api/gateway" : undefined;
+  const defaultProfile = plugin?.defaultModel
+    ? gatewayProfile(sharedBase ?? plugin.gatewayBaseUrl, plugin.defaultModel) : undefined;
   const savedProfile = selectedProfileId
     ? providers.profiles.find(({ id }) => id === selectedProfileId)
-    : plugin ? providers.profiles[0] : undefined;
-  const sharedBase = plugin?.sharedGateway ? window.location.origin + "/api/gateway" : undefined;
+    : plugin ? providers.profiles[0] ?? defaultProfile : undefined;
   const profile = savedProfile && sharedBase ? { ...savedProfile, baseUrl: sharedBase, generatePath: "", editPath: "" } : savedProfile;
   const draft: Draft = savedDraft.enhance === "provider" && (!profile || profile.responsesModel)
     ? { ...savedDraft, enhance: "off" } : savedDraft;
