@@ -13,9 +13,9 @@ export function FunctionRail({ shortcutEnabled, providerLabel, onNew, onGallery,
     <nav className="ws-rail" aria-label="工作台功能">
       <IconButton icon="add" label="新建會話" shortcut={shortcutEnabled ? "Alt+Shift+N" : undefined}
         onClick={onNew} className="ws-rail-add" />
-      <IconButton icon="photo_library" label="開啟圖片庫" onClick={onGallery} />
+      <IconButton icon="photo_library" label="開啟圖片庫" tourTarget="gallery" onClick={onGallery} />
       <IconButton icon="tune" label={providerLabel} onClick={onProvider} className="ws-rail-provider" />
-      <IconButton icon="settings" label="設定" onClick={onSettings} />
+      <IconButton icon="settings" label="設定" tourTarget="settings" onClick={onSettings} />
     </nav>
   );
 }

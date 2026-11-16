@@ -21,7 +21,7 @@ export async function exportWorkspace(workspace: Workspace, session?: Session) {
   const data = { version: 1, workspace: {
     ...workspace, sessions, drafts, assets, jobs, activeId: session?.id ?? workspace.activeId,
     ...(session ? { presets: {}, promptPresets: undefined, generationPresets: undefined,
-      lastGeneration: undefined, lastProfileId: undefined, retentionDays: undefined } : {}),
+      lastGeneration: undefined, lastProfileId: undefined, retentionDays: undefined, tourCompleted: undefined } : {}),
   } };
   const blobs: Blob[] = [];
   const blobIndexes = new Map<Blob, number>();
@@ -186,8 +186,9 @@ export async function importWorkspace(file: File): Promise<Workspace> {
   if (jobs) requireValue(new Set(jobs.map(({ id }) => id)).size === jobs.length);
   requireValue(data.lastGeneration === undefined || record(data.lastGeneration));
   requireValue(data.lastProfileId === undefined || data.lastProfileId === null || typeof data.lastProfileId === "string");
+  requireValue(data.tourCompleted === undefined || data.tourCompleted === true);
   const workspace: Workspace = { sessions, drafts, presets, promptPresets: promptPresets as Workspace["promptPresets"], generationPresets,
-    activeId: data.activeId, assets: data.assets?.map(picture), jobs,
+    activeId: data.activeId, assets: data.assets?.map(picture), jobs, tourCompleted: data.tourCompleted,
     lastGeneration: data.lastGeneration && savedGenerationDefaults(data.lastGeneration), lastProfileId: data.lastProfileId };
   const pictures = new Map(workspacePictures(workspace).map((picture) => [picture.id, picture]));
   const verified = new Set<string>();

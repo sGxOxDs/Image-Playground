@@ -18,13 +18,14 @@ import { useStandaloneApp } from "./useStandaloneApp";
 import { useConversationScroll } from "./useConversationScroll";
 import { AppearanceSettings } from "./appearance";
 import { ShortcutHelp, useWorkspaceShortcuts } from "./Shortcuts";
+import { WorkspaceTour } from "./WorkspaceTour";
 import { CancelJobButton, jobStatusLabel, jobTones, JobProgress, QueuePanel } from "./QueuePanel";
 import type { PluginConnection } from "./WorkspaceEntry";
 import { addReferences, automaticMode, draftProblem, generationDefaults, imagePreview, imageSize, initialWorkspace, maxPromptLength, requestPreview,
   restoreGenerationDefaults, sessionDraft, updateDraftSettings, withImageSource,
   type Draft, type GenerationJob, type Picture, type Session, type Turn, type Workspace } from "./model";
 import { readWorkspace, writeWorkspace } from "./storage";
-import { defaultRetentionDays, pruneExpiredSessions, removeSessions } from "./session-retention";
+import { defaultRetentionDays, legacyBuiltInSessionIds, pruneExpiredSessions, removeSessions, retireBuiltInSessions } from "./session-retention";
 import { Icon, IconButton, PanelDialog, PictureImage, StatusMark } from "./ui";
 import "./workspace.css";
 
@@ -32,9 +33,7 @@ type Panel = "sessions" | "history" | "menu" | "gallery" | "provider" | "setting
 
 export function WorkspaceView({ plugin }: { plugin?: PluginConnection }) {
   const { online, canInstall, install } = useStandaloneApp(!plugin);
-  const [workspace, setWorkspace] = useState<Workspace>(() => plugin
-    ? { sessions: [{ id: "new", title: "新會話", turns: [] }], activeId: "new", drafts: {}, presets: {} }
-    : initialWorkspace);
+  const [workspace, setWorkspace] = useState(initialWorkspace);
   const [ready, setReady] = useState(false);
   const [waitingForWorkspace, setWaitingForWorkspace] = useState(false);
   const [storageError, setStorageError] = useState(false);
@@ -45,6 +44,8 @@ export function WorkspaceView({ plugin }: { plugin?: PluginConnection }) {
   const [maskUploadIssue, setMaskUploadIssue] = useState<{ sessionId: string; sourceId?: string; message: string }>();
   const maskUploads = useRef(new Map<string, symbol>());
   const [panel, setPanel] = useState<Panel | null>(null);
+  const [tourStep, setTourStep] = useState<number | null>(null);
+  const [tourFinishing, setTourFinishing] = useState(false);
   const [sessionDrawerOpen, setSessionDrawerOpen] = useState(true);
   const [historyDrawerOpen, setHistoryDrawerOpen] = useState(true);
   const [query, setQuery] = useState("");
@@ -209,6 +210,22 @@ export function WorkspaceView({ plugin }: { plugin?: PluginConnection }) {
   }, [ready, storageError, workspace, namespace]);
 
   useEffect(() => {
+    if (ready && !storageError && !workspace.tourCompleted) setTourStep(0);
+  }, [ready, storageError, workspace.tourCompleted]);
+
+  useEffect(() => {
+    if (!tourFinishing) return;
+    let mounted = true;
+    // The save effect above enqueues the workspace with both the cleanup and completion flag.
+    void saveQueue.current.then(() => {
+      if (!mounted) return;
+      setTourStep(null);
+      setTourFinishing(false);
+    });
+    return () => { mounted = false; };
+  }, [tourFinishing]);
+
+  useEffect(() => {
     const job = workspace.jobs?.find(({ status }) => status === "queued");
     if (!ready || !job || worker.current) return;
     const controller = new AbortController();
@@ -366,8 +383,27 @@ export function WorkspaceView({ plugin }: { plugin?: PluginConnection }) {
     setPanel(null);
   }
 
+  function finishTour() {
+    if (tourFinishing) return;
+    if (workspace.tourCompleted && !workspace.sessions.some(({ id }) => legacyBuiltInSessionIds.has(id))) {
+      setTourStep(null);
+      return;
+    }
+    const activeJob = jobs.find(({ id }) => id === worker.current?.id);
+    if (activeJob && legacyBuiltInSessionIds.has(activeJob.sessionId)) worker.current?.controller.abort();
+    if (legacyBuiltInSessionIds.has(session.id)) {
+      setSelectedIds([]);
+      setShowEarlier(false);
+      setNotice("");
+    }
+    setTourFinishing(true);
+    setWorkspace((current) => ({ ...retireBuiltInSessions(current), tourCompleted: true }));
+  }
+
   async function restoreWorkspace(restored: Workspace) {
-    const safe = { ...interruptPendingJobs(restored), retentionDays: workspace.retentionDays,
+    const tourCompleted = restored.tourCompleted ?? workspace.tourCompleted;
+    const safe = { ...interruptPendingJobs(tourCompleted ? retireBuiltInSessions(restored) : restored),
+      retentionDays: workspace.retentionDays, tourCompleted,
       lastGeneration: restored.lastGeneration ?? workspace.lastGeneration,
       lastProfileId: restored.lastProfileId === undefined ? workspace.lastProfileId : restored.lastProfileId };
     await saveQueue.current;
@@ -619,21 +655,21 @@ export function WorkspaceView({ plugin }: { plugin?: PluginConnection }) {
     <div ref={appRef} className="ws-app" aria-busy={!ready} inert={!ready}
       data-session-drawer={sessionDrawerOpen} data-history-drawer={historyDrawerOpen}>
       <header className="ws-header">
-        <IconButton icon="menu" label="開啟會話抽屜" className="ws-mobile-only" onClick={() => setPanel("sessions")} />
-        <IconButton icon="menu" label="會話抽屜" className="ws-desktop-only" expanded={sessionDrawerOpen}
+        <IconButton icon="menu" label="開啟會話抽屜" tourTarget="sessions" className="ws-mobile-only" onClick={() => setPanel("sessions")} />
+        <IconButton icon="menu" label="會話抽屜" tourTarget="sessions" className="ws-desktop-only" expanded={sessionDrawerOpen}
           controls="ws-session-drawer" onClick={() => setSessionDrawerOpen(!sessionDrawerOpen)} />
         <div className="ws-brand"><span className="ws-mark"><Icon name="auto_awesome" /></span><div className="ws-brand-name">
           <strong>Image Studio</strong><span className="ws-mobile-session" title={session.title}>{session.title}</span>
         </div></div>
         <span className="ws-breadcrumb"><Icon name="chevron_right" />{session.title}</span>
         <div className="ws-header-actions">
-          <button type="button" className="ws-local" onClick={() => setPanel("provider")}
+          <button type="button" className="ws-local" data-tour-target="provider" onClick={() => setPanel("provider")}
             title={plugin ? `${plugin.userId} · ${gatewayStatus}` : undefined}>
             <span />{plugin ? `LiteLLM · ${gatewayStatus}` : profile?.name ?? (profileRequired ? "Provider 無法使用" : "本機示範")}</button>
-          <IconButton icon="gallery_thumbnail" label="開啟圖片抽屜" className="ws-mobile-only" onClick={() => setPanel("history")} />
-          <IconButton icon="gallery_thumbnail" label="本會話圖片抽屜" className="ws-desktop-only" expanded={historyDrawerOpen}
+          <IconButton icon="gallery_thumbnail" label="開啟圖片抽屜" tourTarget="history" className="ws-mobile-only" onClick={() => setPanel("history")} />
+          <IconButton icon="gallery_thumbnail" label="本會話圖片抽屜" tourTarget="history" className="ws-desktop-only" expanded={historyDrawerOpen}
             controls="ws-history-drawer" onClick={() => setHistoryDrawerOpen(!historyDrawerOpen)} />
-          <IconButton icon="more_horiz" label="更多功能" className="ws-mobile-only" onClick={() => setPanel("menu")} />
+          <IconButton icon="more_horiz" label="更多功能" tourTarget="gallery settings" className="ws-mobile-only" onClick={() => setPanel("menu")} />
         </div>
       </header>
       <AppLayout>
@@ -648,7 +684,7 @@ export function WorkspaceView({ plugin }: { plugin?: PluginConnection }) {
           <div className="ws-conversation-heading">
             <div className="ws-conversation-title"><h1 tabIndex={-1} title={session.title}>{session.title}</h1>
               <div className="ws-management-actions">
-                <button type="button" className="ws-secondary ws-queue-open" aria-keyshortcuts={shortcuts.enabled ? "Alt+Shift+T" : undefined}
+                <button type="button" className="ws-secondary ws-queue-open" data-tour-target="queue" aria-keyshortcuts={shortcuts.enabled ? "Alt+Shift+T" : undefined}
                   onClick={() => setPanel("queue")}>
                   <Icon name="history" />任務{pendingJobs.length ? ` (${pendingJobs.length})` : ""}
                 </button>
@@ -772,6 +808,8 @@ export function WorkspaceView({ plugin }: { plugin?: PluginConnection }) {
           </form>
           <div className="ws-management-actions">
             <button type="button" className="ws-secondary" onClick={() => setPanel("shortcuts")}>鍵盤快捷鍵</button>
+            <button type="button" className="ws-secondary"
+              onClick={() => { setPanel(null); setTourStep(0); }}>重新體驗導覽</button>
             <button type="button" className="ws-secondary" disabled={pendingJobs.length > 0}
               onClick={() => setPanel("manage-data")}>本機資料管理</button>
             {canInstall && <button type="button" className="ws-secondary" onClick={() => void install()}>安裝 Image Studio</button>}
@@ -837,6 +875,8 @@ export function WorkspaceView({ plugin }: { plugin?: PluginConnection }) {
           {details.revisedPrompt && <><h3>Provider 改寫的提示詞</h3><p>{details.revisedPrompt}</p></>}
         </div>
       </PanelDialog>}
+      {ready && tourStep !== null && <WorkspaceTour app={appRef} plugin={Boolean(plugin)} stepIndex={tourStep}
+        finishing={tourFinishing} onStep={setTourStep} onFinish={finishTour} />}
     </div>
   );
 }

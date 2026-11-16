@@ -11,14 +11,15 @@ export function StatusMark({ tone }: { tone: "success" | "warning" | "error" | "
   }</span>;
 }
 
-export function IconButton({ icon, label, onClick, pressed, expanded, controls, disabled, shortcut, className = "" }: {
+export function IconButton({ icon, label, onClick, pressed, expanded, controls, disabled, shortcut, tourTarget, className = "" }: {
   icon: string; label: string; onClick: (event: MouseEvent<HTMLButtonElement>) => void;
   pressed?: boolean; expanded?: boolean; controls?: string; disabled?: boolean; shortcut?: string; className?: string;
+  tourTarget?: string;
 }) {
   return (
     <button type="button" className={`ws-icon-button ${className}`} title={label} aria-label={label}
       aria-pressed={pressed} aria-expanded={expanded} aria-controls={controls}
-      aria-keyshortcuts={shortcut} disabled={disabled} onClick={onClick}>
+      aria-keyshortcuts={shortcut} data-tour-target={tourTarget} disabled={disabled} onClick={onClick}>
       <Icon name={icon} />
     </button>
   );

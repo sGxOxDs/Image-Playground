@@ -9,7 +9,7 @@ type StoredPreset =
   | { kind: "body"; name: string; value: Workspace["presets"][string] }
   | { kind: "prompt"; name: string; value: string }
   | { kind: "generation"; name: string; value: NonNullable<Workspace["generationPresets"]>[string] };
-type WorkspaceIndex = Pick<Workspace, "activeId" | "lastGeneration" | "lastProfileId" | "retentionDays">
+type WorkspaceIndex = Pick<Workspace, "activeId" | "lastGeneration" | "lastProfileId" | "retentionDays" | "tourCompleted">
   & { sessionIds: string[]; assetIds?: string[]; jobIds?: string[] };
 
 const stores = ["workspace", "sessions", "messages", "images", "generation_runs", "presets", "drafts"] as const;
@@ -84,6 +84,7 @@ export async function readWorkspace(namespace = "standalone"): Promise<Workspace
       lastGeneration: index.lastGeneration,
       lastProfileId: index.lastProfileId,
       retentionDays: index.retentionDays,
+      tourCompleted: index.tourCompleted,
       sessions: index.sessionIds.map((id) => {
         const { turnIds, ...session } = required(sessionsById, id);
         return { ...session, turns: turnIds.map((turnId) => {
@@ -121,6 +122,7 @@ export async function writeWorkspace(workspace: Workspace, namespace = "standalo
           lastGeneration: workspace.lastGeneration,
           lastProfileId: workspace.lastProfileId,
           retentionDays: workspace.retentionDays,
+          tourCompleted: workspace.tourCompleted,
           sessionIds: workspace.sessions.map(({ id }) => id),
           assetIds: workspace.assets?.map(({ id }) => id),
           jobIds: workspace.jobs?.map(({ id }) => id),

@@ -98,6 +98,7 @@ export type Workspace = {
   lastGeneration?: GenerationDefaults;
   lastProfileId?: string | null;
   retentionDays?: number;
+  tourCompleted?: true;
 };
 
 export type JobStatus = "queued" | "running" | "completed" | "failed" | "cancelled";
@@ -218,29 +219,10 @@ export function restoreGenerationDefaults(draft: Draft, session: Session): Draft
 }
 
 export const initialWorkspace: Workspace = {
-  activeId: "shinjuku",
+  activeId: "new",
   drafts: {},
   presets: {},
-  sessions: [
-    {
-      id: "shinjuku",
-      title: "東京霓虹雨夜",
-      turns: [
-        {
-          id: "neon-turn",
-          prompt: "捕捉東京街頭的霓虹燈，讓招牌成為畫面的主角。",
-          image: { id: "neon", title: "霓虹街道", source: neonStreet, width: 1100, height: 734 },
-        },
-        {
-          id: "rain-turn",
-          prompt: "把場景改成電影感的雨夜，保留街道構圖，強調地面的霓虹倒影。",
-          image: { id: "rain", title: "雨中的新宿", source: shinjuku, width: 1440, height: 960, parentId: "neon" },
-        },
-      ],
-    },
-    { id: "product", title: "產品攝影", turns: [] },
-    { id: "portfolio", title: "風格實驗", turns: [] },
-  ],
+  sessions: [{ id: "new", title: "新會話", turns: [] }],
 };
 
 export function ratioBasis(draft: Draft): [number, number] | undefined {

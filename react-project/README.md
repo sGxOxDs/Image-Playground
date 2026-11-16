@@ -86,13 +86,17 @@ GitHub Pages 靜態版內嵌在 LiteLLM Dashboard 時直接開啟 Standalone 工
 
 #### 有身分驗證的伺服器部署
 
-1. 在 Image Studio 服務設定 `LITELLM_PARENT_ORIGINS` 為 LiteLLM Dashboard 的來源，並設定依 LiteLLM 文件由 Gateway Salt 衍生的 `PLUGIN_AUTH_KEY`，再執行 `npm run build` 與 `npm run start`。
+建議使用 Docker 部署含身分驗證的外掛版。可由原始碼建置或使用預建映像。 [Docker 啟動方式](#docker)
+
+1. 在 Image Studio 服務設定 `LITELLM_PARENT_ORIGINS` 為 LiteLLM Dashboard 的來源，並設定依 LiteLLM 文件由 Gateway Salt 衍生的 `PLUGIN_AUTH_KEY`。使用 Docker 時，請將這些值以執行時環境變數傳入容器。直接在主機執行時，可使用 `npm run build` 與 `npm run start`。
 2. 在 LiteLLM 登記插件、Image Studio 服務網址與專用 `plugin_key`。若插件名稱不是 `image-studio`，服務需設定相同的 `LITELLM_PLUGIN_NAME`。
 3. 預設使用個人 Virtual Key：將工作台來源加入 Gateway 的 `LITELLM_CORS_ORIGINS`，開啟插件後在「LiteLLM Gateway」輸入 Key、測試連線並選擇模型。若改用下方的共用 Key 模式，請設定 `LITELLM_SHARED_API_KEY` 和 `LITELLM_API_BASE`；工作台透過後端代理連線，不需要使用者輸入 Key 或為此設定 Gateway CORS。
 
 Gateway 預設採用 Dashboard 來源。驗證服務可設定 `LITELLM_BROWSER_API_BASE` 指定瀏覽器可達的 Gateway Base URL。為保留原有的 LiteLLM 資料空間，可沿用已設定的 `LITELLM_GATEWAY_ID` 或 `LITELLM_API_BASE` 作為識別。Virtual Key 的路由與模型權限由 Gateway 管理。 [LiteLLM Plugins](https://docs.litellm.ai/docs/proxy/plugins) · [LiteLLM Virtual Key 權限](https://docs.litellm.ai/docs/proxy/virtual_keys)
 
 #### Docker
+
+從本 repository 建置映像的指令請見 [根目錄的 LiteLLM 外掛部署](../readme.md#litellm-外掛部署)。下方另提供預建映像的啟動方式。
 
 容器包含工作台和身分驗證後端，監聽 3000 埠。從容器外透過 HTTPS 反向代理公開服務，並設定以下執行時環境變數：
 

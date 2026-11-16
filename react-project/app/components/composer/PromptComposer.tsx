@@ -120,7 +120,7 @@ export function PromptComposer({ draft, update, onFiles, onMask, onPreview, onHi
           {draft.references.length}/{referenceLimit(profile)} 張參考圖 · PNG、JPG、WebP · 每張上限 12 MB
         </p>}
         {(maskUploadIssue || invalidMask) && <p className="ws-error ws-mask-error" role="status">{maskUploadIssue || invalidMask}</p>}
-        <textarea ref={promptInput} aria-label="提示詞" value={draft.prompt} rows={2}
+        <textarea ref={promptInput} aria-label="提示詞" data-tour-target="composer" value={draft.prompt} rows={2}
           placeholder={draft.mode === "edit" ? "描述這張圖片要如何修改…" : "描述你想生成的畫面…"}
           onChange={(event) => update({ prompt: event.target.value })}
           onPaste={(event) => { const files = Array.from(event.clipboardData.files); if (files.length) onFiles(files); }}

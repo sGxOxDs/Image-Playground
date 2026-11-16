@@ -2,6 +2,12 @@ import { cleanUnusedAssets, workspacePictures } from "./backup";
 import type { Workspace } from "./model";
 
 export const defaultRetentionDays = 30;
+export const legacyBuiltInSessionIds: ReadonlySet<string> = new Set(["shinjuku", "product", "portfolio"]);
+
+export function retireBuiltInSessions(workspace: Workspace) {
+  const ids = new Set(workspace.sessions.filter(({ id }) => legacyBuiltInSessionIds.has(id)).map(({ id }) => id));
+  return removeSessions(workspace, ids);
+}
 
 export function removeSessions(workspace: Workspace, ids: ReadonlySet<string>, now = Date.now()): Workspace {
   if (!ids.size) return workspace;
