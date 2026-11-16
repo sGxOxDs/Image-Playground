@@ -109,6 +109,15 @@ Gateway 預設採用 Dashboard 來源。驗證服務可設定 `LITELLM_BROWSER_A
 - `LITELLM_BROWSER_API_BASE`：瀏覽器可連線的 Gateway 網址；不設定時使用 Dashboard 來源
 - `LITELLM_SHARED_API_KEY`：選用的共用 LiteLLM Virtual Key，只保存在後端；設定後插件使用後端代理，不需每位使用者輸入 Key
 - `LITELLM_API_BASE`：啟用共用 Key 時必填，指向容器可連線的 LiteLLM Gateway，例如 `http://litellm:4000`
+- `LITELLM_PROXY_UPLOAD_BUDGET_MIB`：共用 Key 代理每程序的在途上傳預算，預設 `512`。每筆預留 body 大小的 4 倍，最低 64 KiB。缺少 Content-Length 時按 128 MiB 上限預留。調低預算會降低可受理的單筆大小與併發量。超出單筆上限回傳 `413`，預算暫滿回傳 `503` 和 `Retry-After: 2`。
+- `LITELLM_PROXY_UPLOAD_TIMEOUT_MS`：共用代理讀取請求內容的期限，預設 `60000`。逾時回傳 `408`。
+- `LITELLM_PROXY_UPSTREAM_TIMEOUT_MS`：共用代理等待上游回應標頭的期限，預設 `300000`。逾時回傳 `504`，收到標頭後可繼續讀取串流。
+
+上傳預算用於限制代理同時處理的資料量。設定容器記憶體配額時，另需留出 Node、GC、回應與連線的使用空間。目前含身分驗證的部署以單副本運行，登入、一次性身分聲明和背景工作歸屬由該程序管理。
+
+本機 A/B 壓測可使用 `scripts/gateway-benchmark.mjs`。在測試網路執行 `node scripts/gateway-benchmark.mjs mock` 啟動 4000 埠的假 Gateway；用 `MOCK_DELAY_MS` 模擬上游等待時間。待測 Image Studio 的 `LITELLM_API_BASE` 指向假 Gateway，`LITELLM_SHARED_API_KEY` 使用任意測試值，`LITELLM_PARENT_ORIGINS` 設為 `https://dashboard.example.test`，`PLUGIN_AUTH_KEY` 使用 `Buffer.alloc(32, 7).toString("base64url")` 產出的測試值。
+
+`node scripts/gateway-benchmark.mjs normal <Studio URL>` 執行固定頻率的正常負載，`run <Studio URL>` 執行完整負載矩陣，`soak <Studio URL> 1800` 執行 30 分鐘的高負載測試。把腳本掛載到待測容器內，設定 `PERF_TELEMETRY=1` 和 `NODE_OPTIONS=--import=/容器內腳本路徑`，可同步取得程序 RSS、heap、external、CPU 和 event loop delay。
 
 將環境變數放在安全保管的 `image-studio.env`，再執行：
 
