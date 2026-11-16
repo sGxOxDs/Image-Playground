@@ -94,6 +94,8 @@ GitHub Pages 靜態版內嵌在 LiteLLM Dashboard 時直接開啟 Standalone 工
 
 Gateway 預設採用 Dashboard 來源。驗證服務可設定 `LITELLM_BROWSER_API_BASE` 指定瀏覽器可達的 Gateway Base URL。為保留原有的 LiteLLM 資料空間，可沿用已設定的 `LITELLM_GATEWAY_ID` 或 `LITELLM_API_BASE` 作為識別。Virtual Key 的路由與模型權限由 Gateway 管理。 [LiteLLM Plugins](https://docs.litellm.ai/docs/proxy/plugins) · [LiteLLM Virtual Key 權限](https://docs.litellm.ai/docs/proxy/virtual_keys)
 
+LiteLLM 自動配置與新建的 Gateway Profile 預設允許最多 8 張編輯參考圖，並將選擇的比例換算成 `size` 送出。可在「圖片端點與模型能力」依模型調整多張參考圖、參考圖上限或送出尺寸。
+
 #### Docker
 
 從本 repository 建置映像的指令請見 [根目錄的 LiteLLM 外掛部署](../readme.md#litellm-外掛部署)。下方另提供預建映像的啟動方式。

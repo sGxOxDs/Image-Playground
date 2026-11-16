@@ -9,7 +9,7 @@ export const emptyProfile: ProviderProfile = {
 
 export function gatewayProfile(baseUrl: string, defaultModel = ""): ProviderProfile {
   return { ...emptyProfile, name: "LiteLLM Gateway", baseUrl, model: defaultModel,
-    seedField: defaultModel ? "seed" : "" };
+    multiImage: true, sendSize: true, seedField: defaultModel ? "seed" : "" };
 }
 
 const storageKey = (namespace: string) => "image-studio:providers:" + namespace;
